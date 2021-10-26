@@ -127,12 +127,12 @@ def find_transcripts(gene,transcripts, count_vec_m, count_vec_c):
     for i in transcripts:
         if i.attr['transcript_biotype'] == 'protein_coding':
             if i.attr['gene_name'] == gene:
-                my_transcript = i
+                transcript = i
                 index = transcripts.index(i)
                 my_vector_m = count_vec_m[transcripts.index(i)]
                 my_vector_c = count_vec_c[transcripts.index(i)]
                 
-    return my_transcript, my_vector_m, my_vector_c, index
+    return transcript, my_vector_m, my_vector_c, index
 
 # Create a function that finds the proteins I need. 
 def find_trans_mmus(gene,transcripts, count_vec_m, count_vec_c):
@@ -290,3 +290,52 @@ def get_smoothed_vector(positions, vector, frac = 0.05):
     smoothed_vec = np.array(smoothed_vec)
     cumsum = np.cumsum(smoothed_vec)
     return smoothed_vec, cumsum
+
+
+def big_dif(diff_dist, transcripts, data_mutant, data_control, figsize = (16,50), fontsize = 12):
+    '''
+    A function which creates a large graph showing the profile arrays for a list of transcripts
+    
+    returns a matplotlib axis object. 
+    '''
+    fig,ax = plt.subplots(len(diff_dist), 2, figsize = figsize)
+    for axi, gi in zip(ax, diff_dist):
+            my_transcript, my_vec_mutant, my_vec_control, index = find_transcripts(gi[1], 
+                                           transcripts, data_mutant, data_control)
+            maxi = max([max(my_vec_mutant), max(my_vec_control)])
+
+            axi[0].plot(my_vec_mutant)
+            axi[0].set_ylim([0,maxi+5])
+            axi[0].set_title("mutant " + gi[1], fontsize = fontsize)
+            axi[1].plot(my_vec_control)
+            axi[1].set_ylim([0,maxi+5])
+            axi[1].set_title("control " + gi[1], fontsize = fontsize)
+            
+    return ax
+
+def big_dif_mmus(diff_dist, transcripts, data_mutant, data_control, figsize = (16,50), fontsize = 12):
+    '''
+    A function which creates a large graph showing the profile arrays for a list of transcripts
+    
+    returns a matplotlib axis object. 
+    '''
+    fig,ax = plt.subplots(len(diff_dist), 2, figsize = figsize)
+    for axi, gi in zip(ax, diff_dist):
+            my_transcript, my_vec_mutant, my_vec_control, index = find_trans_mmus(gi[1], 
+                                           transcripts, data_mutant, data_control)
+            maxi = max([max(my_vec_mutant), max(my_vec_control)])
+
+            axi[0].plot(my_vec_mutant)
+            axi[0].set_ylim([0,maxi+5])
+            axi[0].set_title("mutant " + gi[1], fontsize = fontsize)
+            axi[1].plot(my_vec_control)
+            axi[1].set_ylim([0,maxi+5])
+            axi[1].set_title("control " + gi[1], fontsize = fontsize)
+            
+    return ax
+
+#for tr in gtf_reads:
+#    if tr.attr["transcript_biotype"] == "protein_coding":
+#        if tr.attr["gene_name"] == "sqd":
+#            print(gtf_reads.index(tr))
+#            my_transcript = tr
