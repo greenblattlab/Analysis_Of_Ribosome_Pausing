@@ -135,6 +135,27 @@ def find_transcripts(gene,transcripts, count_vec_m, count_vec_c):
     return transcript, my_vector_m, my_vector_c, index
 
 # Create a function that finds the proteins I need. 
+def find_trans_by_ID(ID,transcripts, count_vec_m, count_vec_c):
+    '''
+    A function that takes the name of a gene as input and finds 
+    the corresponding transcript from a transcript list. 
+    
+    returns both the transcript in question and the vector of counts for that transcript.
+    
+    This function is still a work in progress as for now it simply gives the last 
+    transcript in the list that matches the gene ID. 
+    '''
+    for i in transcripts:
+        if i.attr['transcript_id'] == ID:
+            transcript = i
+            index = transcripts.index(i)
+            my_vector_m = count_vec_m[transcripts.index(i)]
+            my_vector_c = count_vec_c[transcripts.index(i)]
+            break
+                
+    return transcript, my_vector_m, my_vector_c, index
+
+# Create a function that finds the proteins I need. 
 def find_trans_mmus(gene,transcripts, count_vec_m, count_vec_c):
     '''
     A function that takes the name of a gene as input and finds 
@@ -300,16 +321,16 @@ def big_dif(diff_dist, transcripts, data_mutant, data_control, figsize = (16,50)
     '''
     fig,ax = plt.subplots(len(diff_dist), 2, figsize = figsize)
     for axi, gi in zip(ax, diff_dist):
-            my_transcript, my_vec_mutant, my_vec_control, index = find_transcripts(gi[1], 
+            my_transcript, my_vec_mutant, my_vec_control, index = find_transcripts(gi, 
                                            transcripts, data_mutant, data_control)
             maxi = max([max(my_vec_mutant), max(my_vec_control)])
 
             axi[0].plot(my_vec_mutant)
             axi[0].set_ylim([0,maxi+5])
-            axi[0].set_title("mutant " + gi[1], fontsize = fontsize)
+            axi[0].set_title("mutant " + gi, fontsize = fontsize)
             axi[1].plot(my_vec_control)
             axi[1].set_ylim([0,maxi+5])
-            axi[1].set_title("control " + gi[1], fontsize = fontsize)
+            axi[1].set_title("control " + gi, fontsize = fontsize)
             
     return ax
 
@@ -321,16 +342,16 @@ def big_dif_mmus(diff_dist, transcripts, data_mutant, data_control, figsize = (1
     '''
     fig,ax = plt.subplots(len(diff_dist), 2, figsize = figsize)
     for axi, gi in zip(ax, diff_dist):
-            my_transcript, my_vec_mutant, my_vec_control, index = find_trans_mmus(gi[1], 
+            my_transcript, my_vec_mutant, my_vec_control, index = find_trans_mmus(gi, 
                                            transcripts, data_mutant, data_control)
             maxi = max([max(my_vec_mutant), max(my_vec_control)])
 
             axi[0].plot(my_vec_mutant)
             axi[0].set_ylim([0,maxi+5])
-            axi[0].set_title("mutant " + gi[1], fontsize = fontsize)
+            axi[0].set_title("mutant " + gi, fontsize = fontsize)
             axi[1].plot(my_vec_control)
             axi[1].set_ylim([0,maxi+5])
-            axi[1].set_title("control " + gi[1], fontsize = fontsize)
+            axi[1].set_title("control " + gi, fontsize = fontsize)
             
     return ax
 
