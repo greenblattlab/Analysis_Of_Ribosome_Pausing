@@ -312,6 +312,17 @@ def get_smoothed_vector(positions, vector, frac = 0.05):
     cumsum = np.cumsum(smoothed_vec)
     return smoothed_vec, cumsum
 
+def get_smoothed_vector_parallel(vector, frac = 0.05):
+    positions = np.array(list(range(len(vector))))
+    loess = Loess(positions, vector/sum(vector))
+    smoothed_vec = []
+    for x in positions:
+        y = loess.estimate(x, window=int(len(positions)*frac), use_matrix=False, degree=1)
+        smoothed_vec.append(y)
+    smoothed_vec = np.array(smoothed_vec)
+    cumsum = np.cumsum(smoothed_vec)
+    return smoothed_vec, cumsum
+
 
 def big_dif(diff_dist, transcripts, data_mutant, data_control, figsize = (16,50), fontsize = 12):
     '''
@@ -342,16 +353,16 @@ def big_dif_mmus(diff_dist, transcripts, data_mutant, data_control, figsize = (1
     '''
     fig,ax = plt.subplots(len(diff_dist), 2, figsize = figsize)
     for axi, gi in zip(ax, diff_dist):
-            my_transcript, my_vec_mutant, my_vec_control, index = find_trans_by_ID(gi[0], 
+            my_transcript, my_vec_mutant, my_vec_control, index = find_trans_mmus(gi, 
                                            transcripts, data_mutant, data_control)
             maxi = max([max(my_vec_mutant), max(my_vec_control)])
 
             axi[0].plot(my_vec_mutant)
             axi[0].set_ylim([0,maxi+5])
-            axi[0].set_title("mutant " + gi[1], fontsize = fontsize)
+            axi[0].set_title("mutant " + gi, fontsize = fontsize)
             axi[1].plot(my_vec_control)
             axi[1].set_ylim([0,maxi+5])
-            axi[1].set_title("control " + gi[1], fontsize = fontsize)
+            axi[1].set_title("control " + gi, fontsize = fontsize)
             
     return ax
 

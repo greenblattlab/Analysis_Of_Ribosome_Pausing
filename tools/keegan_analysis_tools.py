@@ -312,6 +312,17 @@ def get_smoothed_vector(positions, vector, frac = 0.05):
     cumsum = np.cumsum(smoothed_vec)
     return smoothed_vec, cumsum
 
+def get_smoothed_vector_parallel(vector, frac = 0.05):
+    positions = np.array(list(range(len(vector))))
+    loess = Loess(positions, vector/sum(vector))
+    smoothed_vec = []
+    for x in positions:
+        y = loess.estimate(x, window=int(len(positions)*frac), use_matrix=False, degree=1)
+        smoothed_vec.append(y)
+    smoothed_vec = np.array(smoothed_vec)
+    cumsum = np.cumsum(smoothed_vec)
+    return smoothed_vec, cumsum
+
 
 def big_dif(diff_dist, transcripts, data_mutant, data_control, figsize = (16,50), fontsize = 12):
     '''
