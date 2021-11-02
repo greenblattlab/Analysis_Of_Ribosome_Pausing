@@ -91,8 +91,9 @@ def find_transcript(gene,transcripts, count_vectors):
             if i.attr['gene_name'] == gene:
                 my_transcript = i
                 my_vector = count_vectors[transcripts.index(i)]
+                index = transcripts.index(i)
                 
-    return my_transcript, my_vector
+    return my_transcript, my_vector, index
 
 # Create a function that finds the proteins I need. 
 def find_tran_mmus(gene,transcripts, count_vectors):
