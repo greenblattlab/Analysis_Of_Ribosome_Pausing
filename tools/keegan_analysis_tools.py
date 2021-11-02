@@ -372,3 +372,57 @@ def big_dif_mmus(diff_dist, transcripts, data_mutant, data_control, figsize = (1
 #        if tr.attr["gene_name"] == "sqd":
 #            print(gtf_reads.index(tr))
 #            my_transcript = tr
+
+# Create a function to obtain a normalized profile (p) of ribosome footprints.
+def calculate_p(data):
+    p_list=[]
+    for i in data:
+        i = i+1
+        M = sum(i)
+        p = i/M
+        p_list.append(p)
+    return(p_list)
+
+# Calculate the smoothed density vector pbar for xth entry with length n-9
+def calculate_pbar(p_list):
+    pbar_list=[]
+    for p in p_list:
+        x=0
+        pbar=[]
+        for px in p:
+            pbar_x = 0.1*sum(p[x:x+10]) #it is x+10 not x+9 because python does not include the final index.
+            pbar.append(pbar_x)
+            x = x+1
+            if x  == len(p)-9:
+                break
+        pbar_list.append(np.array(pbar))
+    return(pbar_list)
+
+# calculate the smoothed, scaled elongation rate lambda bar 
+def calculate_lbar(pbar_list):
+    lbar_list=[]
+    for pbar in pbar_list:
+        lbar = []
+        for pbarx in pbar:
+            if pbarx == 0:
+                lbar_x=9999
+            else:
+                lbar_x = (1-9*pbarx)/(pbarx*(1-pbarx))
+            lbar.append(lbar_x)
+        lbar_list.append(np.array(lbar))
+    return(lbar_list)
+
+def calculate_tau(lbar_list, codon_seq_list):
+    tau_list = []
+    for lbar, index in zip(lbar_list, list(range(len(lbar_list)))):
+        A = np.zeros((len(lbar),64))
+        for row, i in zip(A, range(len(A))):
+            set_of_10 = codon_seq_list[index][i:i+10] # what do I do with the index? 
+            for j in set_of_10:
+                row[j] = 1
+        b = 10*lbar
+        ls_result = lsqr(A,b)
+        Ci = ls_result[0]
+        tau = Ci.mean()
+        tau_list.append(tau)
+    return(tau_list)
