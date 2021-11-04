@@ -16,6 +16,7 @@ import csv
 from scipy.sparse.linalg import lsqr
 import time
 import math
+import copy
 
 def variable_threeprime_map_function(alignments,segment,p_offsets):
         '''
@@ -301,6 +302,33 @@ def load_count_positions(csv_name, csv_path):
     
     return data
 
+def load_elongation_rates(csv_name, csv_path):
+    data = []
+    with open(csv_path + csv_name, newline = '') as csvfile:
+        reader = csv.reader(csvfile)
+        for row in reader:
+            data.append(row)
+    blank=data.pop(0)
+            
+    for i,ii in zip(data, range(len(data))):
+        for j,jj in zip(i, range(len(i))):
+            try:
+                x = float(j)
+                data[ii][jj] = x
+            except:
+                pass
+            
+    # Remove empty space
+    for i,ii in zip(data, range(len(data))):
+        x = list(filter(('').__ne__, i))
+        data[ii] = x
+        
+    # Convert lists to np.arrays
+    for i,ii in zip(data, range(len(data))):
+        data[ii] = np.array(data[ii][2:])
+    
+    return data
+
 # define a function that calculates the smoothed vector of the normalized reads
 # using loess and calculates the cumulative sum of said vector.
 def get_smoothed_vector(positions, vector, frac = 0.05):
@@ -426,3 +454,57 @@ def calculate_tau(lbar_list, codon_seq_list):
         tau = Ci.mean()
         tau_list.append(tau)
     return(tau_list)
+
+def low_density(lamb,a,I):
+    '''
+    A function that calculates the particle density along a transcript from a set of elongation rates
+    inferred from ribosome profiling. This function assumes that elongation is in a low density regime
+    (e.g. initiation limiting)
+    '''
+    Jl = (a*(lamb[0]-a))/(lamb[0] + (I-1)*a)
+    pl = 1/(2*I) + (Jl*(I-1))/(2*I*lamb) - np.sqrt((1/(2*I) + (Jl*(I-1))/(2*I*lamb))**2 - Jl/(I*lamb))
+    return(pl) 
+
+def high_density(lamb,B,I):
+    '''
+    A function that calculates the particle density along a transcript from a set of elongation rates
+    inferred from ribosome profiling. This function assumes that elongation is in a high density regime
+    (e.g. termination limiting)
+    '''
+    JR = (B*(lamb[-1]-B))/(lamb[-1] + (I-1)*B)
+    pR = 1/(2*I) + (JR*(I-1))/(2*I*lamb) + np.sqrt((1/(2*I) + (JR*(I-1))/(2*I*lamb))**2 - JR/(I*lamb))
+    return(pR) 
+
+def maximum_current(lamb,a,B,I):
+    '''
+    A function that calculates the particle density along a transcript from a set of elongation rates
+    inferred from ribosome profiling. This function assumes that elongation is in a maximum current regime
+    (e.g. elongation limiting)
+    '''
+    Jmax = min(lamb)/((1+np.sqrt(I))**2)
+    flip = np.where(lamb == np.amin(lamb))[0][0]
+    pR = 1/(2*I) + (Jmax*(I-1))/(2*I*lamb[0:flip]) + np.sqrt((1/(2*I) + (Jmax*(I-1))/(
+        2*I*lamb[0:flip]))**2 - Jmax/(I*lamb[0:flip]))
+    pl = 1/(2*I) + (Jmax*(I-1))/(2*I*lamb[flip:]) - np.sqrt((1/(2*I) + (Jmax*(I-1))/(
+        2*I*lamb[flip:]))**2 - Jmax/(I*lamb[flip:]))
+    p = np.concatenate((pR,pl))
+    return(p) 
+
+def alter_p(arr_c, arr_m, I = 10):
+    lam_c = copy.deepcopy(arr_c)
+    lam_m = copy.deepcopy(arr_m)
+    Jmax = min(lam_c)/((1+np.sqrt(I))**2)
+    crit_a = ((lam_c[0] - (I-1) * Jmax) / 2)*(1 - np.sqrt(1 - (4*lam_c[0]*Jmax)/((lam_c[0] - (I - 1)*Jmax)**2)))
+    crit_B = ((lam_c[-1] - (I-1) * Jmax) / 2)*(1 - np.sqrt(1 - (4*lam_c[-1]*Jmax)/((lam_c[-1] - (I - 1)*Jmax)**2)))
+    a = crit_a * 0.80
+    B = crit_B * 1.2
+    mut_min = np.where(lam_m == np.amin(lam_m[30:]))[0][0] # I need to double check if 20 is a good number
+    while True:
+        lam_c[mut_min] = lam_c[mut_min]*0.9 # It keeps doing this every run through. 
+        Jmax = min(lam_c)/((1+np.sqrt(I))**2)
+        crit_a = ((lam_c[0] - (I-1) * Jmax) / 2)*(1 - np.sqrt(1 - (4*lam_c[0]*Jmax)/((lam_c[0] - (I - 1)*Jmax)**2)))
+        crit_B = ((lam_c[-1] - (I-1) * Jmax) / 2)*(1 - np.sqrt(1 - (4*lam_c[-1]*Jmax)/((lam_c[-1] - (I - 1)*Jmax)**2)))
+        if crit_a < a and crit_B < B:
+            break
+    p = maximum_current(lam_c,a=a,B=B,I = 10)
+    return p
