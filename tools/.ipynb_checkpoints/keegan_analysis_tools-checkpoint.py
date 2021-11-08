@@ -498,7 +498,7 @@ def alter_p(arr_c, arr_m, I = 10):
     crit_B = ((lam_c[-1] - (I-1) * Jmax) / 2)*(1 - np.sqrt(1 - (4*lam_c[-1]*Jmax)/((lam_c[-1] - (I - 1)*Jmax)**2)))
     a = crit_a * 0.80
     B = crit_B * 1.2
-    mut_min = np.where(lam_m == np.amin(lam_m[30:]))[0][0] # I need to double check if 20 is a good number
+    mut_min = np.where(lam_m == np.amin(lam_m))[0][0]
     while True:
         lam_c[mut_min] = lam_c[mut_min]*0.9 # It keeps doing this every run through. 
         Jmax = min(lam_c)/((1+np.sqrt(I))**2)
