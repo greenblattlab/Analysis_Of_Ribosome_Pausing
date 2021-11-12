@@ -197,7 +197,10 @@ class Loess(object):
     def normalize_array(array):
         min_val = np.min(array)
         max_val = np.max(array)
-        return (array - min_val) / (max_val - min_val), min_val, max_val
+        if (max_val - min_val) == 0:
+            return (array - min_val) / 1, min_val, max_val
+        else:
+            return (array - min_val) / (max_val - min_val), min_val, max_val
 
     def __init__(self, xx, yy, degree=1):
         self.n_xx, self.min_xx, self.max_xx = self.normalize_array(xx)
@@ -268,9 +271,12 @@ class Loess(object):
 
             mean_x = sum_weight_x / sum_weight
             mean_y = sum_weight_y / sum_weight
+            denom = (sum_weight_x2 - mean_x * mean_x * sum_weight)
+            if denom == 0:
+                denom = 1e-20
 
             b = (sum_weight_xy - mean_x * mean_y * sum_weight) / \
-                (sum_weight_x2 - mean_x * mean_x * sum_weight)
+                denom
             a = mean_y - b * mean_x
             y = a + b * n_x
         return self.denormalize_y(y)
@@ -332,6 +338,7 @@ def load_elongation_rates(csv_name, csv_path):
 # define a function that calculates the smoothed vector of the normalized reads
 # using loess and calculates the cumulative sum of said vector.
 def get_smoothed_vector(positions, vector, frac = 0.05):
+    vector = vector + 0.000000001
     loess = Loess(positions, vector/sum(vector))
     smoothed_vec = []
     for x in positions:
@@ -342,6 +349,7 @@ def get_smoothed_vector(positions, vector, frac = 0.05):
     return smoothed_vec, cumsum
 
 def get_smoothed_vector_parallel(vector, frac = 0.05):
+    vector = vector + 0.0000000001
     positions = np.array(list(range(len(vector))))
     loess = Loess(positions, vector/sum(vector))
     smoothed_vec = []
@@ -351,49 +359,6 @@ def get_smoothed_vector_parallel(vector, frac = 0.05):
     smoothed_vec = np.array(smoothed_vec)
     cumsum = np.cumsum(smoothed_vec)
     return smoothed_vec, cumsum
-
-
-def big_dif(diff_dist, transcripts, data_mutant, data_control, figsize = (16,50), fontsize = 12):
-    '''
-    A function which creates a large graph showing the profile arrays for a list of transcripts
-    
-    returns a matplotlib axis object. 
-    '''
-    fig,ax = plt.subplots(len(diff_dist), 2, figsize = figsize)
-    for axi, gi in zip(ax, diff_dist):
-            my_transcript, my_vec_mutant, my_vec_control, index = find_transcripts(gi, 
-                                           transcripts, data_mutant, data_control)
-            maxi = max([max(my_vec_mutant), max(my_vec_control)])
-
-            axi[0].plot(my_vec_mutant)
-            axi[0].set_ylim([0,maxi+5])
-            axi[0].set_title("mutant " + gi, fontsize = fontsize)
-            axi[1].plot(my_vec_control)
-            axi[1].set_ylim([0,maxi+5])
-            axi[1].set_title("control " + gi, fontsize = fontsize)
-            
-    return ax
-
-def big_dif_mmus(diff_dist, transcripts, data_mutant, data_control, figsize = (16,50), fontsize = 12):
-    '''
-    A function which creates a large graph showing the profile arrays for a list of transcripts
-    
-    returns a matplotlib axis object. 
-    '''
-    fig,ax = plt.subplots(len(diff_dist), 2, figsize = figsize)
-    for axi, gi in zip(ax, diff_dist):
-            my_transcript, my_vec_mutant, my_vec_control, index = find_trans_mmus(gi, 
-                                           transcripts, data_mutant, data_control)
-            maxi = max([max(my_vec_mutant), max(my_vec_control)])
-
-            axi[0].plot(my_vec_mutant)
-            axi[0].set_ylim([0,maxi+5])
-            axi[0].set_title("mutant " + gi, fontsize = fontsize)
-            axi[1].plot(my_vec_control)
-            axi[1].set_ylim([0,maxi+5])
-            axi[1].set_title("control " + gi, fontsize = fontsize)
-            
-    return ax
 
 #for tr in gtf_reads:
 #    if tr.attr["transcript_biotype"] == "protein_coding":
@@ -508,3 +473,58 @@ def alter_p(arr_c, arr_m, I = 10):
             break
     p = maximum_current(lam_c,a=a,B=B,I = 10)
     return p
+
+#Add some label parameters to this and then put it in kat for gods sake. 
+def big_dif(diff_dist, transcripts, data_mutant, data_control, figsize = (16,50), fontsize = 12, stat_name = "ks_stat ="):
+    '''
+    A function which creates a large graph showing the profile arrays for a list of transcripts
+    
+    returns a matplotlib axis object. 
+    '''
+    fig,ax = plt.subplots(len(diff_dist), 2, figsize = figsize)
+    for axi, stat, gi in zip(ax, diff_dist, diff_dist.index):
+            my_transcript, my_vec_mutant, my_vec_control, index = find_transcripts(gi, 
+                                           transcripts, data_mutant, data_control)
+            maxi = max([max(my_vec_mutant), max(my_vec_control)])*1.1
+
+            axi[0].plot(my_vec_mutant)
+            axi[0].text(len(my_vec_mutant)/2, maxi/1.2, stat_name + str(stat), fontsize = fontsize)
+            axi[0].set_ylim([0,maxi])
+            axi[0].set_ylabel("Read Counts", fontsize = fontsize)
+            axi[0].set_xlabel("Codon Position", fontsize = fontsize)
+            axi[0].set_title("mutant " + gi, fontsize = fontsize)
+            axi[1].plot(my_vec_control)
+            axi[1].set_ylim([0,maxi])
+            axi[1].set_ylabel("Read Counts", fontsize = fontsize)
+            axi[1].set_xlabel("Codon Position", fontsize = fontsize)
+            axi[1].set_title("control " + gi, fontsize = fontsize)
+    fig.tight_layout()
+            
+    return ax
+
+def big_dif_mmus(diff_dist, transcripts, data_mutant, data_control, figsize = (16,50), fontsize = 12):
+    '''
+    A function which creates a large graph showing the profile arrays for a list of transcripts
+    
+    returns a matplotlib axis object. 
+    '''
+    fig,ax = plt.subplots(len(diff_dist), 2, figsize = figsize)
+    for axi, stat, gi in zip(ax, diff_dist, diff_dist.index):
+            my_transcript, my_vec_mutant, my_vec_control, index = find_trans_mmus(gi, 
+                                           transcripts, data_mutant, data_control)
+            maxi = max([max(my_vec_mutant), max(my_vec_control)])*1.1
+
+            axi[0].plot(my_vec_mutant)
+            axi[0].text(len(my_vec_mutant)/2, maxi/1.2, stat_name + str(stat), fontsize = fontsize)
+            axi[0].set_ylim([0,maxi+5])
+            axi[0].set_ylabel("Read Counts", fontsize = fontsize)
+            axi[0].set_xlabel("Codon Position", fontsize = fontsize)
+            axi[0].set_title("mutant " + gi, fontsize = fontsize)
+            axi[1].plot(my_vec_control)
+            axi[1].set_ylim([0,maxi+5])
+            axi[1].set_ylabel("Read Counts", fontsize = fontsize)
+            axi[1].set_xlabel("Codon Position", fontsize = fontsize)
+            axi[1].set_title("control " + gi, fontsize = fontsize)
+    fig.tight_layout()
+    
+    return ax
