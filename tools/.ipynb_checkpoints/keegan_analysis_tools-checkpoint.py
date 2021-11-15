@@ -337,8 +337,9 @@ def load_elongation_rates(csv_name, csv_path):
 
 # define a function that calculates the smoothed vector of the normalized reads
 # using loess and calculates the cumulative sum of said vector.
-def get_smoothed_vector(positions, vector, frac = 0.05):
+def get_smoothed_vector(vector, frac = 0.05):
     vector = vector + 0.000000001
+    positions = np.array(list(range(len(vector))))
     loess = Loess(positions, vector/sum(vector))
     smoothed_vec = []
     for x in positions:
@@ -475,6 +476,36 @@ def alter_p(arr_c, arr_m, I = 10):
     return p
 
 #Add some label parameters to this and then put it in kat for gods sake. 
+def big_dif_smoothed(diff_dist, transcripts, data_mutant, data_control, figsize = (16,50), fontsize = 12, stat_name = "ks_stat ="):
+    '''
+    A function which creates a large graph showing the smoothed profile arrays for a list of transcripts
+    
+    returns a matplotlib axis object. 
+    '''
+    fig,ax = plt.subplots(len(diff_dist), 2, figsize = figsize)
+    for axi, stat, gi in zip(ax, diff_dist, diff_dist.index):
+            my_transcript, my_vec_mutant, my_vec_control, index = find_transcripts(gi, 
+                                           transcripts, data_mutant, data_control)
+            
+            sm_m, cumul_m = get_smoothed_vector(my_vec_mutant)
+            sm_c, cumul_c = get_smoothed_vector(my_vec_control)
+            maxi = max([max(sm_m), max(sm_c)])*1.1
+
+            axi[0].plot(sm_m)
+            axi[0].text(len(sm_m)/2, maxi/1.2, stat_name + str(stat), fontsize = fontsize)
+            axi[0].set_ylim([0,maxi])
+            axi[0].set_ylabel("Read Counts", fontsize = fontsize)
+            axi[0].set_xlabel("Codon Position", fontsize = fontsize)
+            axi[0].set_title("mutant " + gi, fontsize = fontsize)
+            axi[1].plot(sm_c)
+            axi[1].set_ylim([0,maxi])
+            axi[1].set_ylabel("Read Counts", fontsize = fontsize)
+            axi[1].set_xlabel("Codon Position", fontsize = fontsize)
+            axi[1].set_title("control " + gi, fontsize = fontsize)
+    fig.tight_layout()
+            
+    return ax
+
 def big_dif(diff_dist, transcripts, data_mutant, data_control, figsize = (16,50), fontsize = 12, stat_name = "ks_stat ="):
     '''
     A function which creates a large graph showing the profile arrays for a list of transcripts
@@ -509,16 +540,22 @@ def big_dif_mmus(diff_dist, transcripts, data_mutant, data_control, figsize = (1
     returns a matplotlib axis object. 
     '''
     fig,ax = plt.subplots(len(diff_dist), 2, figsize = figsize)
-    for axi, gi in zip(ax, diff_dist):
+    for axi, stat, gi in zip(ax, diff_dist, diff_dist.index):
             my_transcript, my_vec_mutant, my_vec_control, index = find_trans_mmus(gi, 
                                            transcripts, data_mutant, data_control)
-            maxi = max([max(my_vec_mutant), max(my_vec_control)])
+            maxi = max([max(my_vec_mutant), max(my_vec_control)])*1.1
 
             axi[0].plot(my_vec_mutant)
+            axi[0].text(len(my_vec_mutant)/2, maxi/1.2, stat_name + str(stat), fontsize = fontsize)
             axi[0].set_ylim([0,maxi+5])
+            axi[0].set_ylabel("Read Counts", fontsize = fontsize)
+            axi[0].set_xlabel("Codon Position", fontsize = fontsize)
             axi[0].set_title("mutant " + gi, fontsize = fontsize)
             axi[1].plot(my_vec_control)
             axi[1].set_ylim([0,maxi+5])
+            axi[1].set_ylabel("Read Counts", fontsize = fontsize)
+            axi[1].set_xlabel("Codon Position", fontsize = fontsize)
             axi[1].set_title("control " + gi, fontsize = fontsize)
-            
+    fig.tight_layout()
+    
     return ax
