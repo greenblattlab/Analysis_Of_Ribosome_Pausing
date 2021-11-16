@@ -457,6 +457,20 @@ def maximum_current(lamb,a,B,I):
     return(p) 
 
 def alter_p(arr_c, arr_m, I = 10):
+    '''
+    This function is used to create artificially elongation limited particle density profiles
+    to be used as part of the TASEP-KS method. 
+    
+    The steps taken to create the artifically elongation limited particle densities are as follows:
+   
+    1. determine the critical initiation and termination rates of the control transcrpt assuming maximum current
+    2. arbitrarily set the initiation rate slightly below the critical initation rate and the termination rate 
+       slightly above the critical termination rate in order to put the transcript in a low density phase.
+    3. Find the maximum pause in the mutant transcript and then locate the pause 
+    4. recursively lower the elongation rate in the control at the site of elongation limitation in the mutant until 
+       elongation limitation occurs in the control
+    5. Calculate the particle density of the 
+    '''
     lam_c = copy.deepcopy(arr_c)
     lam_m = copy.deepcopy(arr_m)
     Jmax = min(lam_c)/((1+np.sqrt(I))**2)
@@ -464,9 +478,10 @@ def alter_p(arr_c, arr_m, I = 10):
     crit_B = ((lam_c[-1] - (I-1) * Jmax) / 2)*(1 - np.sqrt(1 - (4*lam_c[-1]*Jmax)/((lam_c[-1] - (I - 1)*Jmax)**2)))
     a = crit_a * 0.80
     B = crit_B * 1.2
-    mut_min = np.where(lam_m == np.amin(lam_m))[0][0]
+    mut_min = np.amin(lam_m)
+    el_p = np.amax(np.where(lam_m < mut_min*2)[0])
     while True:
-        lam_c[mut_min] = lam_c[mut_min]*0.9 # It keeps doing this every run through. 
+        lam_c[el_p] = lam_c[el_p]*0.9 # It keeps doing this every run through. 
         Jmax = min(lam_c)/((1+np.sqrt(I))**2)
         crit_a = ((lam_c[0] - (I-1) * Jmax) / 2)*(1 - np.sqrt(1 - (4*lam_c[0]*Jmax)/((lam_c[0] - (I - 1)*Jmax)**2)))
         crit_B = ((lam_c[-1] - (I-1) * Jmax) / 2)*(1 - np.sqrt(1 - (4*lam_c[-1]*Jmax)/((lam_c[-1] - (I - 1)*Jmax)**2)))
