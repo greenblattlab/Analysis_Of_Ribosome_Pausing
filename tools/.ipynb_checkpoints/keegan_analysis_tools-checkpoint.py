@@ -233,7 +233,10 @@ class Loess(object):
     @staticmethod
     def get_weights(distances, min_range):
         max_distance = np.max(distances[min_range])
-        weights = tricubic(distances[min_range] / max_distance)
+        if max_distance != 0:
+            weights = tricubic(distances[min_range] / max_distance)
+        else:
+            weights = tricubic(distances[min_range] / 0.01)
         return weights
 
     def normalize_x(self, value):
@@ -268,9 +271,12 @@ class Loess(object):
             sum_weight_y = np.dot(yy, weights)
             sum_weight_x2 = np.dot(np.multiply(xx, xx), weights)
             sum_weight_xy = np.dot(np.multiply(xx, yy), weights)
-
-            mean_x = sum_weight_x / sum_weight
-            mean_y = sum_weight_y / sum_weight
+            if sum_weight != 0:
+                mean_x = sum_weight_x / sum_weight
+                mean_y = sum_weight_y / sum_weight
+            else:
+                mean_x = sum_weight_x / 0.01
+                mean_y = sum_weight_y / 0.01
             denom = (sum_weight_x2 - mean_x * mean_x * sum_weight)
             if denom == 0:
                 denom = 1e-20
@@ -466,10 +472,11 @@ def alter_p(arr_c, arr_m, I = 10):
     1. determine the critical initiation and termination rates of the control transcrpt assuming maximum current
     2. arbitrarily set the initiation rate slightly below the critical initation rate and the termination rate 
        slightly above the critical termination rate in order to put the transcript in a low density phase.
-    3. Find the maximum pause in the mutant transcript and then locate the pause 
+    3. Find the maximum pause in the mutant transcript and then locate the pause furthest to the right of the transcript
+       that is within 50% of the maximum pause site
     4. recursively lower the elongation rate in the control at the site of elongation limitation in the mutant until 
        elongation limitation occurs in the control
-    5. Calculate the particle density of the 
+    5. Calculate the particle density of the new set of elongation rates for the control using the maximum current equations
     '''
     lam_c = copy.deepcopy(arr_c)
     lam_m = copy.deepcopy(arr_m)
@@ -555,7 +562,7 @@ def big_dif_mmus(diff_dist, transcripts, data_mutant, data_control, figsize = (1
     returns a matplotlib axis object. 
     '''
     fig,ax = plt.subplots(len(diff_dist), 2, figsize = figsize)
-    for axi, stat, gi in zip(ax, diff_dist, diff_dist.index):
+    for axi, stat_name, gi in zip(ax, diff_dist, diff_dist.index):
             my_transcript, my_vec_mutant, my_vec_control, index = find_trans_mmus(gi, 
                                            transcripts, data_mutant, data_control)
             maxi = max([max(my_vec_mutant), max(my_vec_control)])*1.1

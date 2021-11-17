@@ -233,7 +233,10 @@ class Loess(object):
     @staticmethod
     def get_weights(distances, min_range):
         max_distance = np.max(distances[min_range])
-        weights = tricubic(distances[min_range] / max_distance)
+        if max_distance != 0:
+            weights = tricubic(distances[min_range] / max_distance)
+        else:
+            weights = tricubic(distances[min_range] / 0.01)
         return weights
 
     def normalize_x(self, value):
@@ -268,9 +271,12 @@ class Loess(object):
             sum_weight_y = np.dot(yy, weights)
             sum_weight_x2 = np.dot(np.multiply(xx, xx), weights)
             sum_weight_xy = np.dot(np.multiply(xx, yy), weights)
-
-            mean_x = sum_weight_x / sum_weight
-            mean_y = sum_weight_y / sum_weight
+            if sum_weight != 0:
+                mean_x = sum_weight_x / sum_weight
+                mean_y = sum_weight_y / sum_weight
+            else:
+                mean_x = sum_weight_x / 0.01
+                mean_y = sum_weight_y / 0.01
             denom = (sum_weight_x2 - mean_x * mean_x * sum_weight)
             if denom == 0:
                 denom = 1e-20
@@ -556,7 +562,7 @@ def big_dif_mmus(diff_dist, transcripts, data_mutant, data_control, figsize = (1
     returns a matplotlib axis object. 
     '''
     fig,ax = plt.subplots(len(diff_dist), 2, figsize = figsize)
-    for axi, stat, gi in zip(ax, diff_dist, diff_dist.index):
+    for axi, stat_name, gi in zip(ax, diff_dist, diff_dist.index):
             my_transcript, my_vec_mutant, my_vec_control, index = find_trans_mmus(gi, 
                                            transcripts, data_mutant, data_control)
             maxi = max([max(my_vec_mutant), max(my_vec_control)])*1.1
