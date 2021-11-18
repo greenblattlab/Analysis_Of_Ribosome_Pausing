@@ -16,6 +16,7 @@ import csv
 from scipy.sparse.linalg import lsqr
 import time
 import math
+from tqdm import tqdm
 import copy
 
 def variable_threeprime_map_function(alignments,segment,p_offsets):
@@ -414,7 +415,7 @@ def calculate_lbar(pbar_list):
 
 def calculate_tau(lbar_list, codon_seq_list):
     tau_list = []
-    for lbar, index in zip(lbar_list, list(range(len(lbar_list)))):
+    for lbar, index in tqdm(zip(lbar_list, list(range(len(lbar_list))))):
         A = np.zeros((len(lbar),64))
         for row, i in zip(A, range(len(A))):
             set_of_10 = codon_seq_list[index][i:i+10] # what do I do with the index? 
@@ -425,6 +426,7 @@ def calculate_tau(lbar_list, codon_seq_list):
         Ci = ls_result[0]
         tau = Ci.mean()
         tau_list.append(tau)
+    
     return(tau_list)
 
 def low_density(lamb,a,I):
@@ -555,14 +557,14 @@ def big_dif(diff_dist, transcripts, data_mutant, data_control, figsize = (16,50)
             
     return ax
 
-def big_dif_mmus(diff_dist, transcripts, data_mutant, data_control, figsize = (16,50), fontsize = 12):
+def big_dif_mmus(diff_dist, transcripts, data_mutant, data_control, figsize = (16,50), fontsize = 12, stat_name = "ks stat ="):
     '''
     A function which creates a large graph showing the profile arrays for a list of transcripts
     
     returns a matplotlib axis object. 
     '''
     fig,ax = plt.subplots(len(diff_dist), 2, figsize = figsize)
-    for axi, stat_name, gi in zip(ax, diff_dist, diff_dist.index):
+    for axi, stat, gi in zip(ax, diff_dist, diff_dist.index):
             my_transcript, my_vec_mutant, my_vec_control, index = find_trans_mmus(gi, 
                                            transcripts, data_mutant, data_control)
             maxi = max([max(my_vec_mutant), max(my_vec_control)])*1.1
