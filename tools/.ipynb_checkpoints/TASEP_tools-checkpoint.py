@@ -15,6 +15,7 @@ import matplotlib.pyplot as plt
 import csv
 from scipy.sparse.linalg import lsqr
 import time
+import random
 import math
 from tqdm import tqdm
 import copy
@@ -73,7 +74,7 @@ def make_mc(arr_c, position, a, B, I = 10):
     p, J = maximum_current(lamb_c,a=a,B=B,I = 10)
     return p, J
 
-####!!!!#### If I am going to keep this function I better do something about the possibility of a high density regime.
+####!!!!#### This function is unsure of what to do in the presence of a high density regime. 
 def make_ld(lamb, a, B, I = 10):
     '''
     This function attempts to force everything to be in a low density regime regardless 
@@ -145,9 +146,9 @@ def get_density(lamb, a, B, I = 10, intermediates = False):
     elif intermediates == True:
         return p, J, phase, a, B, crit_a, crit_B, min(lamb_c), lamb_c[0], lamb_c[-1]
     
-    def get_all_intermediates(mean_lambda = 4, sd = 3, min_lambda = 0.8, length = 400, a = 0.02, B = 2, read_density = 1, pause_N = 4, 
-                     pause_str = 0.5, a_frac = 1.0, rng_a = False, rng_pause = False, rng_p_range = (0.1, 0.8),
-                     rng_a_range = (0.25,2), elon_frac = 1):
+def get_all_intermediates(mean_lambda = 4, sd = 3, min_lambda = 0.8, length = 400, a = 0.02, B = 2, read_density = 1, pause_N = 4, 
+                    pause_str = 0.5, a_frac = 1.0, rng_a = False, rng_pause = False, rng_p_range = (0.1, 0.8),
+                    rng_a_range = (0.25,2), elon_frac = 1):
     '''
     A function that simulates ribosome profiling data from a mutant and a control for a single gene. 
     
@@ -336,3 +337,22 @@ def simulate_profile(mean_lambda = 4, sd = 3, min_lambda = 0.8, length = 400, a 
         return reads_c, J_c, phase_c, reads_m, J_m, phase_m
     elif return_min_lam == True:
         return reads_c, J_c, phase_c, min(lamb_c), reads_m, J_m, phase_m, min(lamb_m)
+    
+def determine_sim_enrichment(ks_table, N_cats, max_ks):
+    ratios = []
+    all_ks = ks_table
+    ks_MC = ks_table[ks_table["phase_mutant"] == "MC"]
+    sections = split_equal(max_ks, N_cats)
+    ratios.append(len(ks_MC.ks_stat[ks_MC.ks_stat < sections[0]])/len(all_ks.ks_stat[all_ks.ks_stat < sections[0]]))
+    for sec, i in zip(sections, list(range(len(sections)))):
+        try:
+            ratios.append(len(ks_MC.ks_stat[(ks_MC.ks_stat > sec) & (ks_MC.ks_stat < sections[i+1])]
+                )/len(all_ks.ks_stat[(all_ks.ks_stat > sec) & (all_ks.ks_stat < sections[i+1])]))
+        except:
+            pass
+    ratios.append(len(ks_MC.ks_stat[ks_MC.ks_stat > sections[-1]])/len(all_ks.ks_stat[all_ks.ks_stat > sections[-1]]))
+    return ratios, sections
+
+def split_equal(value, parts):
+    value = float(value)
+    return [i*value/parts for i in range(1,parts+1)]

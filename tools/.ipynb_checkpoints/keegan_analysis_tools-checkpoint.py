@@ -598,33 +598,6 @@ def big_dif(diff_dist, gene_names, data_mutant, data_control, figsize = (16,50),
             
     return ax
 
-def big_dif_mmus(diff_dist, transcripts, data_mutant, data_control, figsize = (16,50), fontsize = 12, stat_name = "ks stat ="):
-    '''
-    A function which creates a large graph showing the profile arrays for a list of transcripts
-    
-    returns a matplotlib axis object. 
-    '''
-    fig,ax = plt.subplots(len(diff_dist), 2, figsize = figsize)
-    for axi, stat, gi in zip(ax, diff_dist, diff_dist.index):
-            my_transcript, my_vec_mutant, my_vec_control, index = find_trans_mmus(gi, 
-                                           transcripts, data_mutant, data_control)
-            maxi = max([max(my_vec_mutant), max(my_vec_control)])*1.1
-
-            axi[0].plot(my_vec_mutant)
-            axi[0].text(len(my_vec_mutant)/2, maxi/1.2, stat_name + str(stat), fontsize = fontsize)
-            axi[0].set_ylim([0,maxi+5])
-            axi[0].set_ylabel("Read Counts", fontsize = fontsize)
-            axi[0].set_xlabel("Codon Position", fontsize = fontsize)
-            axi[0].set_title("mutant " + gi, fontsize = fontsize)
-            axi[1].plot(my_vec_control)
-            axi[1].set_ylim([0,maxi+5])
-            axi[1].set_ylabel("Read Counts", fontsize = fontsize)
-            axi[1].set_xlabel("Codon Position", fontsize = fontsize)
-            axi[1].set_title("control " + gi, fontsize = fontsize)
-    fig.tight_layout()
-    
-    return ax
-
 def low_density(lamb,a,I = 10):
     '''
     A function that calculates the particle density along a transcript from a set of elongation rates
