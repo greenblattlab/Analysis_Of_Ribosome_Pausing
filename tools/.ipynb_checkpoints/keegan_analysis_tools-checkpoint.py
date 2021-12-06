@@ -1,4 +1,4 @@
-""" Functions used to regularly in most analyses files 
+""" Functions used regularly during my analysis to load and process data. 
 """
 
 from plastid import BAMGenomeArray, VariableFivePrimeMapFactory, \
@@ -289,13 +289,17 @@ class Loess(object):
         return self.denormalize_y(y)
     
 def load_count_positions(csv_name, csv_path):
+    # Create a list to hold the data and then fill it
     data = []
     with open(csv_path + csv_name, newline = '') as csvfile:
         reader = csv.reader(csvfile)
         for row in reader:
             data.append(row)
+    
+    # Remove the first row of the data (the header row)
     blank=data.pop(0)
-            
+    
+    # Try to convert everything to a float if possible
     for i,ii in zip(data, range(len(data))):
         for j,jj in zip(i, range(len(i))):
             try:
@@ -314,6 +318,39 @@ def load_count_positions(csv_name, csv_path):
         data[ii] = np.array(data[ii][2:])
     
     return data
+
+def save_count_positions(transcripts, codon_counts, save_path, save_name):
+    """
+    This function saves a list of count arrays as a csv file while adding on the gene ID and transcript ID to the file and adding
+    a header that shows the position along the transcript for each count.
+    """
+    #create lists to hold the gene IDs and transcript IDs of the transcripts 
+    gene_id = []
+    transcript_id = []
+
+    for transcript in protein_coding:
+        gene_id.append(transcript.attr["gene_name"])
+        transcript_id.append(transcript.attr["transcript_id"])
+        
+    # Insert the gene ids and transcript ids into the codon_count list. 
+    for i, j in zip(codon_counts, range(len(gene_id))):
+        i.insert(0,gene_id[j])
+        i.insert(0,transcript_id[j])
+        
+    # Calculate the longest cds region in our new list of counts
+    l_tr = kat.find_max_list(codon_counts)
+
+    # Define a header that includes labels for the transcript and gene ID as 
+    # well as numbers that index the cds region position.
+    header=["transcript_id","gene_id"]+list(range(l_tr))
+
+    # insert that header into our counts list. 
+    codon_counts.insert(0,header)
+    
+    # Save the newly altered list as a csv. 
+    with open(save_path + save_name, 'w', newline='') as f:
+        writer = csv.writer(f)
+        writer.writerows(codon_counts)
 
 def load_elongation_rates(csv_name, csv_path):
     data = []
