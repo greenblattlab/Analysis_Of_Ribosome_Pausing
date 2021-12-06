@@ -287,18 +287,19 @@ class Loess(object):
             a = mean_y - b * mean_x
             y = a + b * n_x
         return self.denormalize_y(y)
-    
-def load_count_positions(csv_name, csv_path):
+
+def load_count_positions(csv_name, counts_path):
     # Create a list to hold the data and then fill it
     data = []
-    with open(csv_path + csv_name, newline = '') as csvfile:
+    gene_names = []
+    with open(counts_path + csv_name, newline = '') as csvfile:
         reader = csv.reader(csvfile)
         for row in reader:
             data.append(row)
-    
+        
     # Remove the first row of the data (the header row)
     blank=data.pop(0)
-    
+            
     # Try to convert everything to a float if possible
     for i,ii in zip(data, range(len(data))):
         for j,jj in zip(i, range(len(i))):
@@ -315,9 +316,10 @@ def load_count_positions(csv_name, csv_path):
         
     # Convert lists to np.arrays
     for i,ii in zip(data, range(len(data))):
+        gene_names.append(data[ii][1])
         data[ii] = np.array(data[ii][2:])
     
-    return data
+    return data, gene_names
 
 def save_count_positions(transcripts, codon_counts, save_path, save_name):
     """
@@ -537,7 +539,7 @@ def alter_p(arr_c, arr_m, I = 10):
     return p
 
 #Add some label parameters to this and then put it in kat for gods sake. 
-def big_dif_smoothed(diff_dist, transcripts, data_mutant, data_control, figsize = (16,50), fontsize = 12, stat_name = "ks_stat ="):
+def big_dif_smoothed(diff_dist, gene_names, data_mutant, data_control, figsize = (16,50), fontsize = 12, stat_name = "ks_stat ="):
     '''
     A function which creates a large graph showing the smoothed profile arrays for a list of transcripts
     
@@ -545,29 +547,29 @@ def big_dif_smoothed(diff_dist, transcripts, data_mutant, data_control, figsize 
     '''
     fig,ax = plt.subplots(len(diff_dist), 2, figsize = figsize)
     for axi, stat, gi in zip(ax, diff_dist, diff_dist.index):
-            my_transcript, my_vec_mutant, my_vec_control, index = find_transcripts(gi, 
-                                           transcripts, data_mutant, data_control)
-            
-            sm_m, cumul_m = get_smoothed_vector(my_vec_mutant)
-            sm_c, cumul_c = get_smoothed_vector(my_vec_control)
-            maxi = max([max(sm_m), max(sm_c)])*1.1
-
-            axi[0].plot(sm_m)
-            axi[0].text(len(sm_m)/2, maxi/1.2, stat_name + str(stat), fontsize = fontsize)
-            axi[0].set_ylim([0,maxi])
-            axi[0].set_ylabel("Read Counts", fontsize = fontsize)
-            axi[0].set_xlabel("Codon Position", fontsize = fontsize)
-            axi[0].set_title("mutant " + gi, fontsize = fontsize)
-            axi[1].plot(sm_c)
-            axi[1].set_ylim([0,maxi])
-            axi[1].set_ylabel("Read Counts", fontsize = fontsize)
-            axi[1].set_xlabel("Codon Position", fontsize = fontsize)
-            axi[1].set_title("control " + gi, fontsize = fontsize)
+        for tr_m, tr_c, name in zip(data_mutant, data_control, gene_names):
+            if gi == name:
+                my_vec_mutant = tr_m
+                my_vec_control = tr_c
+        sm_m, cumul_m = get_smoothed_vector(my_vec_mutant)
+        sm_c, cumul_c = get_smoothed_vector(my_vec_control)
+        maxi = max([max(sm_m), max(sm_c)])*1.1
+        axi[0].plot(sm_m)
+        axi[0].text(len(sm_m)/2, maxi/1.2, stat_name + str(stat), fontsize = fontsize)
+        axi[0].set_ylim([0,maxi])
+        axi[0].set_ylabel("Read Counts", fontsize = fontsize)
+        axi[0].set_xlabel("Codon Position", fontsize = fontsize)
+        axi[0].set_title("mutant " + gi, fontsize = fontsize)
+        axi[1].plot(sm_c)
+        axi[1].set_ylim([0,maxi])
+        axi[1].set_ylabel("Read Counts", fontsize = fontsize)
+        axi[1].set_xlabel("Codon Position", fontsize = fontsize)
+        axi[1].set_title("control " + gi, fontsize = fontsize)
     fig.tight_layout()
             
     return ax
 
-def big_dif(diff_dist, transcripts, data_mutant, data_control, figsize = (16,50), fontsize = 12, stat_name = "ks_stat ="):
+def big_dif(diff_dist, gene_names, data_mutant, data_control, figsize = (16,50), fontsize = 12, stat_name = "ks_stat ="):
     '''
     A function which creates a large graph showing the profile arrays for a list of transcripts
     
@@ -575,21 +577,23 @@ def big_dif(diff_dist, transcripts, data_mutant, data_control, figsize = (16,50)
     '''
     fig,ax = plt.subplots(len(diff_dist), 2, figsize = figsize)
     for axi, stat, gi in zip(ax, diff_dist, diff_dist.index):
-            my_transcript, my_vec_mutant, my_vec_control, index = find_transcripts(gi, 
-                                           transcripts, data_mutant, data_control)
-            maxi = max([max(my_vec_mutant), max(my_vec_control)])*1.1
+        for tr_m, tr_c, name in zip(data_mutant, data_control, gene_names):
+            if gi == name:
+                my_vec_mutant = tr_m
+                my_vec_control = tr_c
+        maxi = max([max(my_vec_mutant), max(my_vec_control)])*1.1
 
-            axi[0].plot(my_vec_mutant)
-            axi[0].text(len(my_vec_mutant)/2, maxi/1.2, stat_name + str(stat), fontsize = fontsize)
-            axi[0].set_ylim([0,maxi])
-            axi[0].set_ylabel("Read Counts", fontsize = fontsize)
-            axi[0].set_xlabel("Codon Position", fontsize = fontsize)
-            axi[0].set_title("mutant " + gi, fontsize = fontsize)
-            axi[1].plot(my_vec_control)
-            axi[1].set_ylim([0,maxi])
-            axi[1].set_ylabel("Read Counts", fontsize = fontsize)
-            axi[1].set_xlabel("Codon Position", fontsize = fontsize)
-            axi[1].set_title("control " + gi, fontsize = fontsize)
+        axi[0].plot(my_vec_mutant)
+        axi[0].text(len(my_vec_mutant)/2, maxi/1.2, stat_name + str(stat), fontsize = fontsize)
+        axi[0].set_ylim([0,maxi])
+        axi[0].set_ylabel("Read Counts", fontsize = fontsize)
+        axi[0].set_xlabel("Codon Position", fontsize = fontsize)
+        axi[0].set_title("mutant " + gi, fontsize = fontsize)
+        axi[1].plot(my_vec_control)
+        axi[1].set_ylim([0,maxi])
+        axi[1].set_ylabel("Read Counts", fontsize = fontsize)
+        axi[1].set_xlabel("Codon Position", fontsize = fontsize)
+        axi[1].set_title("control " + gi, fontsize = fontsize)
     fig.tight_layout()
             
     return ax
