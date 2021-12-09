@@ -407,12 +407,6 @@ def get_smoothed_vector_parallel(vector, frac = 0.05):
     cumsum = np.cumsum(smoothed_vec)
     return smoothed_vec, cumsum
 
-#for tr in gtf_reads:
-#    if tr.attr["transcript_biotype"] == "protein_coding":
-#        if tr.attr["gene_name"] == "sqd":
-#            print(gtf_reads.index(tr))
-#            my_transcript = tr
-
 # Create a function to obtain a normalized profile (p) of ribosome footprints.
 def calculate_p(data):
     p_list=[]
