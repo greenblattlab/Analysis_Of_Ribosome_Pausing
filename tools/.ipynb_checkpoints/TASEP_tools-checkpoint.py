@@ -299,7 +299,7 @@ def simulate_profile(mean_lambda = 4, sd = 3, min_lambda = 0.8, length = 400, a 
         
     # Create a set of random pause sights in your mutant. 
     pause_sites = []
-    for i in range(round(length/2)):
+    for i in range(round(length)):
         if random.random() < pause_density:
             pause_sites.append(i)
     if rng_pause == True:
