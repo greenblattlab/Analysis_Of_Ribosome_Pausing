@@ -18,6 +18,7 @@ import time
 import math
 from tqdm import tqdm
 import copy
+from statsmodels.stats.proportion import proportions_ztest
 
 def variable_threeprime_map_function(alignments,segment,p_offsets):
         '''
@@ -68,7 +69,7 @@ def variable_threeprime_map_function(alignments,segment,p_offsets):
 def VariableThreePrimeMapFactory(p_offsets):
     '''
     BamGenome array objects will only be able to pass the alignments and segment
-    arguments to the variable_threeprime_map_function. This wrapper allows me to
+    arguments to the variable_threeprime_map_function. This wrapper all_gows me to
     also specify the offset that needs to be passed to the function. 
     '''
     def new_func(alignments,segment):
@@ -115,68 +116,6 @@ def find_tran_mmus(gene,transcripts, count_vectors):
             print(transcripts.index(i))
                 
     return my_transcript, my_vector
-
-# Create a function that finds the proteins I need. 
-def find_transcripts(gene,transcripts, count_vec_m, count_vec_c):
-    '''
-    A function that takes the name of a gene as input and finds 
-    the corresponding transcript from a transcript list. 
-    
-    returns both the transcript in question and the vector of counts for that transcript.
-    
-    This function is still a work in progress as for now it simply gives the last 
-    transcript in the list that matches the gene ID. 
-    '''
-    for i in transcripts:
-        if i.attr['transcript_biotype'] == 'protein_coding':
-            if i.attr['gene_name'] == gene:
-                transcript = i
-                index = transcripts.index(i)
-                my_vector_m = count_vec_m[transcripts.index(i)]
-                my_vector_c = count_vec_c[transcripts.index(i)]
-                
-    return transcript, my_vector_m, my_vector_c, index
-
-# Create a function that finds the proteins I need. 
-def find_trans_by_ID(ID,transcripts, count_vec_m, count_vec_c):
-    '''
-    A function that takes the name of a gene as input and finds 
-    the corresponding transcript from a transcript list. 
-    
-    returns both the transcript in question and the vector of counts for that transcript.
-    
-    This function is still a work in progress as for now it simply gives the last 
-    transcript in the list that matches the gene ID. 
-    '''
-    for i in transcripts:
-        if i.attr['transcript_id'] == ID:
-            transcript = i
-            index = transcripts.index(i)
-            my_vector_m = count_vec_m[transcripts.index(i)]
-            my_vector_c = count_vec_c[transcripts.index(i)]
-            break
-                
-    return transcript, my_vector_m, my_vector_c, index
-
-# Create a function that finds the proteins I need. 
-def find_trans_mmus(gene,transcripts, count_vec_m, count_vec_c):
-    '''
-    A function that takes the name of a gene as input and finds 
-    the corresponding transcript from a transcript list. 
-    
-    returns both the transcript in question and the vector of counts for that transcript.
-    
-    This function is still a work in progress as for now it simply gives the last 
-    transcript in the list that matches the gene ID. 
-    '''
-    for i in transcripts:
-            if i.attr['gene_name'] == gene:
-                my_transcript = i
-                index = transcripts.index(i)
-                my_vector_m = count_vec_m[transcripts.index(i)]
-                my_vector_c = count_vec_c[transcripts.index(i)]
-                
-    return my_transcript, my_vector_m, my_vector_c, index
 
 def find_max_list(list):
     ''' 
@@ -330,7 +269,7 @@ def save_count_positions(transcripts, codon_counts, save_path, save_name):
     gene_id = []
     transcript_id = []
 
-    for transcript in protein_coding:
+    for transcript in transcripts:
         gene_id.append(transcript.attr["gene_name"])
         transcript_id.append(transcript.attr["transcript_id"])
         
@@ -340,7 +279,7 @@ def save_count_positions(transcripts, codon_counts, save_path, save_name):
         i.insert(0,transcript_id[j])
         
     # Calculate the longest cds region in our new list of counts
-    l_tr = kat.find_max_list(codon_counts)
+    l_tr = find_max_list(codon_counts)
 
     # Define a header that includes labels for the transcript and gene ID as 
     # well as numbers that index the cds region position.
@@ -385,18 +324,6 @@ def load_elongation_rates(csv_name, csv_path):
 # using loess and calculates the cumulative sum of said vector.
 def get_smoothed_vector(vector, frac = 0.05):
     vector = vector + 0.000000001
-    positions = np.array(list(range(len(vector))))
-    loess = Loess(positions, vector/sum(vector))
-    smoothed_vec = []
-    for x in positions:
-        y = loess.estimate(x, window=int(len(positions)*frac), use_matrix=False, degree=1)
-        smoothed_vec.append(y)
-    smoothed_vec = np.array(smoothed_vec)
-    cumsum = np.cumsum(smoothed_vec)
-    return smoothed_vec, cumsum
-
-def get_smoothed_vector_parallel(vector, frac = 0.05):
-    vector = vector + 0.0000000001
     positions = np.array(list(range(len(vector))))
     loess = Loess(positions, vector/sum(vector))
     smoothed_vec = []
@@ -499,10 +426,10 @@ def maximum_current(lamb,a,B,I):
 
 def alter_p(arr_c, arr_m, I = 10):
     '''
-    This function is used to create artificially elongation limited particle density profiles
+    This function is used to create artificiall_gy elongation limited particle density profiles
     to be used as part of the TASEP-KS method. 
     
-    The steps taken to create the artifically elongation limited particle densities are as follows:
+    The steps taken to create the artificall_gy elongation limited particle densities are as follows:
    
     1. determine the critical initiation and termination rates of the control transcrpt assuming maximum current
     2. arbitrarily set the initiation rate slightly below the critical initation rate and the termination rate 
@@ -592,179 +519,47 @@ def big_dif(diff_dist, gene_names, data_mutant, data_control, figsize = (16,50),
             
     return ax
 
-def low_density(lamb,a,I = 10):
+def split_equal(value, parts):
     '''
-    A function that calculates the particle density along a transcript from a set of elongation rates
-    inferred from ribosome profiling. This function assumes that elongation is in a low density regime
-    (e.g. initiation limiting)
+    A simple function that takes a number (value) and then divides that number into a certain number (parts) of equal parts
     '''
-    Jl = (a*(lamb[0]-a))/(lamb[0] + (I-1)*a)
-    pl = 1/(2*I) + (Jl*(I-1))/(2*I*lamb) - np.sqrt((1/(2*I) + (Jl*(I-1))/(2*I*lamb))**2 - Jl/(I*lamb))
-    return(pl) 
+    value = float(value)
+    return [i*value/parts for i in range(1,parts+1)]
 
-def high_density(lamb,B,I = 10):
+def determine_enrichment(target, all_g, max_stat, N_secs, stat = "ks_stat"): 
     '''
-    A function that calculates the particle density along a transcript from a set of elongation rates
-    inferred from ribosome profiling. This function assumes that elongation is in a high density regime
-    (e.g. termination limiting)
+    A function that determine the proportion of target genes from target that are found in
+    all_g ks for a specified number of KS fractions. 
     '''
-    JR = (B*(lamb[-1]-B))/(lamb[-1] + (I-1)*B)
-    pR = 1/(2*I) + (JR*(I-1))/(2*I*lamb) + np.sqrt((1/(2*I) + (JR*(I-1))/(2*I*lamb))**2 - JR/(I*lamb))
-    return(pR) 
+    ratios = []
+    sections = split_equal(max_stat, N_secs)
+    ratios.append(len(target[stat][target[stat] < sections[0]])/len(all_g[stat][all_g[stat] < sections[0]]))
+    for sec, i in zip(sections, list(range(len(sections)))):
+        try:
+            ratios.append(len(target[stat][(target[stat] > sec) & (target[stat] < sections[i+1])]
+                )/len(all_g[stat][(all_g[stat] > sec) & (all_g[stat] < sections[i+1])]))
+        except:
+            pass
+    ratios.append(len(target[stat][target[stat] > sections[-1]])/len(all_g[stat][all_g[stat] > sections[-1]]))
+    sections.insert(0,0)
+    return ratios, sections
 
-def maximum_current(lamb,a,B,I = 10):
+def det_p_values(target, all_g, sections, stat = "ks_stat"):
     '''
-    A function that calculates the particle density along a transcript from a set of elongation rates
-    inferred from ribosome profiling. This function assumes that elongation is in a maximum current regime
-    (e.g. elongation limiting)
+    A function that uses the proportion Z test to determine if the enrichment of the target gene is
+    significant in any KS fractions. 
     '''
-    Jmax = min(lamb)/((1+np.sqrt(I))**2)
-    flip = np.where(lamb == np.amin(lamb))[0][0]
-    pR = 1/(2*I) + (Jmax*(I-1))/(2*I*lamb[0:flip]) + np.sqrt((1/(2*I) + (Jmax*(I-1))/(
-        2*I*lamb[0:flip]))**2 - Jmax/(I*lamb[0:flip]))
-    pl = 1/(2*I) + (Jmax*(I-1))/(2*I*lamb[flip:]) - np.sqrt((1/(2*I) + (Jmax*(I-1))/(
-        2*I*lamb[flip:]))**2 - Jmax/(I*lamb[flip:]))
-    p = np.concatenate((pR,pl))
-    return(p) 
-
-def make_mc(arr_c, position, a, B, I = 10):
-    '''
-    This function purposefully induces elongation limitation at a certain point 
-    '''
-    lamb_c = copy.deepcopy(arr_c)
-    Jmax = min(lamb_c)/((1+np.sqrt(I))**2)
-    crit_a = ((lamb_c[0] - (I-1) * Jmax) / 2)*(1 - np.sqrt(1 - (4*lamb_c[0]*Jmax)/((lamb_c[0] - (I - 1)*Jmax)**2)))
-    crit_B = ((lamb_c[-1] - (I-1) * Jmax) / 2)*(1 - np.sqrt(1 - (4*lamb_c[-1]*Jmax)/((lamb_c[-1] - (I - 1)*Jmax)**2)))
-    mut_min = position
-    while True:
-        lamb_c[mut_min] = lamb_c[mut_min]*0.9 # It keeps doing this every run through. 
-        Jmax = min(lamb_c)/((1+np.sqrt(I))**2)
-        crit_a = ((lamb_c[0] - (I-1) * Jmax) / 2)*(1 - np.sqrt(1 - (4*lamb_c[0]*Jmax)/((lamb_c[0] - (I - 1)*Jmax)**2)))
-        crit_B = ((lamb_c[-1] - (I-1) * Jmax) / 2)*(1 - np.sqrt(1 - (4*lamb_c[-1]*Jmax)/((lamb_c[-1] - (I - 1)*Jmax)**2)))
-        if crit_a < a and crit_B < B:
-            break
-    p = maximum_current(lamb_c,a=a,B=B,I = 10)
-    return p
-
-####!!!!#### If I am going to keep this function I better do something about the possibility of a high density regime.
-def make_ld(lamb, a, B, I = 10):
-    '''
-    This function attempts to 
-    '''
-    lamb_c = copy.deepcopy(lamb)# Create a copy of lamb to work on. 
-    Jmax = min(lamb_c)/((1+np.sqrt(I))**2)
-    crit_a = ((lamb_c[0] - (I-1) * Jmax) / 2)*(1 - np.sqrt(1 - (4*lamb_c[0]*Jmax)/((lamb_c[0] - (I - 1)*Jmax)**2)))
-    crit_B = ((lamb_c[-1] - (I-1) * Jmax) / 2)*(1 - np.sqrt(1 - (4*lamb_c[-1]*Jmax)/((lamb_c[-1] - (I - 1)*Jmax)**2)))
-    if a < crit_a and B > crit_B:
-        p = low_density(lamb_c, a, I)
-    else:
-        while True:
-            min_l = np.where(lamb_c == np.amin(lamb_c))[0][0]
-            lamb_c[min_l] = lamb_c[min_l]*1.1 # It keeps doing this every run through. 
-            Jmax = min(lamb_c)/((1+np.sqrt(I))**2)
-            crit_a = ((lamb_c[0] - (I-1) * Jmax) / 2)*(1 - np.sqrt(1 - (4*lamb_c[0]*Jmax)/((lamb_c[0] - (I - 1)*Jmax)**2)))
-            crit_B = ((lamb_c[-1] - (I-1) * Jmax) / 2)*(1 - np.sqrt(1 - (4*lamb_c[-1]*Jmax)/((lamb_c[-1] - (I - 1)*Jmax)**2)))
-            if a < crit_a and B > crit_B:
-                break
-        p = low_density(lamb_c, a, I) 
-    return p
-
-def get_density(lamb, a, B, I = 10, intermediates = False):
-    '''A function that determines the correct elongation  regime/phase and calculates the correct density 
-       accordingly
-       
-       arg lamb: A set of elongation rates for each codon in a transcript
-       type: list of floats
-       
-       arg a: An initiation rate (the rate at which ribosomes are added to the transcript)
-       type: float
-       
-       arg B: A termination rate (the rate a which ribosomes leave the transcript)
-       type: float
-       
-       arg I: The particle size to be used in the TASEP model (should equal the size of the ribosome in codons)
-       type: int
-       
-       arg intermediates: If set to true than the function will output all intermediate values used to calculate densities
-       type: bool 
-    
-    '''
-    lamb_c = copy.deepcopy(lamb)# Create a copy of lamb to work on. 
-    Jmax = min(lamb_c)/((1+np.sqrt(I))**2)
-    crit_a = ((lamb_c[0] - (I-1) * Jmax) / 2)*(1 - np.sqrt(1 - (4*lamb_c[0]*Jmax)/((lamb_c[0] - (I - 1)*Jmax)**2)))
-    crit_B = ((lamb_c[-1] - (I-1) * Jmax) / 2)*(1 - np.sqrt(1 - (4*lamb_c[-1]*Jmax)/((lamb_c[-1] - (I - 1)*Jmax)**2)))
-    if a < crit_a and B > crit_B:
-        p = low_density(lamb_c, a, I)
-        density = "LD"
-    elif a > crit_a and B < crit_B:
-        p = high_density(lamb_c, B, I)
-        density = "HD"
-    elif a < crit_a and B < crit_B:
-        Jl = (a*(lamb[0]-a))/(lamb[0] + (I-1)*a)
-        JR = (B*(lamb[-1]-B))/(lamb[-1] + (I-1)*B)
-        sign = Jl - JR 
-        if sign > 0:
-            p = low_density(lamb_c, a, I)
-            density = "LD"
-        elif sign < 0:
-            p = high_density(lamb_c, B, I)
-            density = "HD"
-    elif a > crit_a and B > crit_B:
-        p = maximum_current(lamb_c, a, B, I)
-        density = "MC"
-    if intermediates == False:
-        return p, density
-    elif intermediates == True:
-        return p, a, B, crit_a, crit_B, min(lamb_c), lamb_c[0]
-
-# Create a function to automate the simulation process
-def simulate_profile(mean_lambda, sd, length, a, B = 2, read_density = 1):
-    '''
-    A function that simulates ribosome profiling data from a mutant and a control for a single gene. 
-    
-    mean_lambda: The mean elongation rate used for the simulated gene
-    type: float
-    
-    sd: The standard deviation of the elongation rates for your simulated gene
-    type: float
-    
-    length: The length of your simulated gene
-    type: int
-    
-    a: The initiation rate of your simulated gene
-    type: float
-    
-    B: The termination rate of your simulated gene
-    type: float
-    
-    read_density: how many reads should be extracted from your simulated gene per codon. 
-    type: int
-    
-    '''
-    mean_sqr = np.sqrt(mean_lambda)
-    sample_size = int(read_density * length)
-    lamb_c = np.random.gamma(mean_sqr, sd, length)+0.3
-    
-    # Create a set of random pause sights in your mutant. 
-    pause_sites = np.random.randint(10, length/2, 4)
-    lamb_m = copy.deepcopy(lamb_c)
-    for ps in pause_sites:
-        lamb_m[ps] = lamb_m[ps]* np.random.uniform(0.1, 0.8, 1)[0]
-    
-    # simulate the reads for the control
-    p_c = get_density(lamb_c, a, B)
-    prob_c = p_c[0]/sum(p_c[0])
-    reads_c = np.zeros(length)
-    for i in range(sample_size):
-        x = numpy.random.choice(np.arange(0, len(prob_c)), p = prob_c)
-        reads_c[x] = reads_c[x]+1
-
-    # simulate the reads for the mutant assuming LD
-    mu_a = a* np.random.uniform(0.25, 2, 1)[0]
-    p_m = get_density(lamb_m, mu_a, B)
-    prob_m = p_m[0]/sum(p_m[0])
-    reads_m = np.zeros(length)
-    for i in range(sample_size):
-        x = numpy.random.choice(np.arange(0, len(prob_m)), p = prob_m)
-        reads_m[x] = reads_m[x]+1
-    return reads_c, reads_m
+    p_values = []
+    for sec, i in zip(sections, list(range(len(sections)))):
+        try:
+            obs = len(target[stat][(target[stat] > sec) & (target[stat] < sections[i + 1])])
+            all_g_p = len(all_g[stat][(all_g[stat] > sec) & (all_g[stat] < sections[i + 1])])
+            p_v = proportions_ztest(obs, all_g_p, len(target)/len(all_g))[1]
+            p_values.append(p_v)
+        except:
+            pass
+    obs = len(target[stat][target[stat] > sections[-1]])
+    all_g_p = len(all_g[stat][all_g[stat] > sections[-1]])
+    p_v = proportions_ztest(obs, all_g_p, len(target)/len(all_g))[1]
+    p_values.append(p_v)
+    return p_values
