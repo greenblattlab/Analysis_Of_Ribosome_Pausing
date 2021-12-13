@@ -19,6 +19,7 @@ import random
 import math
 from tqdm import tqdm
 import copy
+from sympy import symbols, solve, sqrt
 
 def low_density(lamb,a,I = 10):
     '''
@@ -356,3 +357,41 @@ def determine_sim_enrichment(ks_table, N_cats, max_ks):
 def split_equal(value, parts):
     value = float(value)
     return [i*value/parts for i in range(1,parts+1)]
+
+def big_dif_sim(diff_dist, data_mutant, data_control, figsize = (16,50), fontsize = 12, stat_name = "ks_stat ="):
+    '''
+    A function which creates a large graph showing the profile arrays for a list of transcripts
+    
+    returns a matplotlib axis object. 
+    '''
+    fig,ax = plt.subplots(len(diff_dist), 2, figsize = figsize)
+    for axi, stat, gi in zip(ax, diff_dist, diff_dist.index):
+            my_vec_mutant = data_mutant[gi]
+            my_vec_control = data_control[gi]
+            maxi = max([max(my_vec_mutant), max(my_vec_control)])*1.1
+
+            axi[0].plot(my_vec_mutant)
+            axi[0].text(len(my_vec_mutant)/2, maxi/1.2, stat_name + str(stat), fontsize = fontsize)
+            axi[0].set_ylim([0,maxi])
+            axi[0].set_ylabel("Read Counts", fontsize = fontsize)
+            axi[0].set_xlabel("Codon Position", fontsize = fontsize)
+            axi[0].set_title("mutant " + str(gi), fontsize = fontsize)
+            axi[1].plot(my_vec_control)
+            axi[1].set_ylim([0,maxi])
+            axi[1].set_ylabel("Read Counts", fontsize = fontsize)
+            axi[1].set_xlabel("Codon Position", fontsize = fontsize)
+            axi[1].set_title("control " + str(gi), fontsize = fontsize)
+    fig.tight_layout()
+            
+    return ax
+
+# create a function that can determine the minimum elongation rate necessary to make alpha/crit_alpha equal to 1 (the minimum elongation rate necesary for a phase change)
+def get_crit_lambda(alpha, l1, I = 10):
+    '''
+    This function calculates the minimum elongation rate that would be necessary to make the quotient of alpha divided by the critical alpha equal to one. 
+    This means that this function outputs the minimum elongation rate that is necessary for a phase change to occur. 
+    '''
+    lmin = symbols('lmin', positive = True, real = True)
+    expr = ((l1 - (I-1) * (lmin/((1+sqrt(I))**2))) / 2)*(1 - sqrt(1 - (4*l1*(lmin/((1+sqrt(I))**2)))/((l1 - (I - 1)*(lmin/((1+sqrt(I))**2)))**2))) - alpha
+    sol = solve(expr)
+    return sol
