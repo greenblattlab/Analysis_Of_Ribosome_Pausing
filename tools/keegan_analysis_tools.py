@@ -544,9 +544,9 @@ def determine_enrichment(target, all_g, max_stat, N_secs, stat = "ks_stat"):
     sections.insert(0,0)
     return ratios, sections
 
-def det_p_values(target, all_g, sections, stat = "ks_stat"):
+def Fisher_exact_p_values(target, all_g, sections, stat = "ks_stat"):
     '''
-    A function that uses the proportion Z test to determine if the enrichment of the target gene is
+    A function that uses Fisher's exact test to determine if the enrichment of the target gene is
     significant in any KS fractions. 
     '''
     p_values = []
@@ -554,12 +554,14 @@ def det_p_values(target, all_g, sections, stat = "ks_stat"):
         try:
             obs = len(target[stat][(target[stat] > sec) & (target[stat] < sections[i + 1])])
             all_g_p = len(all_g[stat][(all_g[stat] > sec) & (all_g[stat] < sections[i + 1])])
-            p_v = proportions_ztest(obs, all_g_p, len(target)/len(all_g))[1]
+            table = [[obs,len(target)-obs],[all_g_p,len(all_g)-all_g_p]]
+            p_v = stats.fisher_exact(table)[1]
             p_values.append(p_v)
         except:
             pass
     obs = len(target[stat][target[stat] > sections[-1]])
     all_g_p = len(all_g[stat][all_g[stat] > sections[-1]])
-    p_v = proportions_ztest(obs, all_g_p, len(target)/len(all_g))[1]
+    table = [[obs,len(target)-obs],[all_g_p,len(all_g)-all_g_p]]
+    p_v = stats.fisher_exact(table)[1]
     p_values.append(p_v)
     return p_values

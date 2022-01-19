@@ -241,8 +241,8 @@ def get_all_intermediates(mean_lambda = 4, sd = 3, min_lambda = 0.8, length = 40
            crit_a_m, crit_B_m, min_l_m, ini_l_m, term_l_m)
 
 # Create a function to automate the simulation process
-def simulate_profile(mean_lambda = 4, sd = 3, min_lambda = 0.8, length = 400, a = 0.02, B = 2, read_density = 1, pause_density = 0.01, 
-                     pause_str = 0.5, a_frac = 1.0, rng_a = False, rng_pause = False, rng_p_range = (0.1, 0.8),
+def simulate_profile(mean_lambda = 4, sd = 3, min_lambda = 0.8, length = 400, a = 0.02, B = 2, min_read_density = 1, pause_density = 0.01, 
+                     pause_str = 0.5, pause_area = 1, a_frac = 1.0, rng_a = False, rng_pause = False, rng_p_range = (0.1, 0.8),
                      rng_a_range = (0.25,2), elon_frac = 1, return_min_lam = False):
     '''
     A function that simulates ribosome profiling data from a mutant and a control for a single gene. 
@@ -294,13 +294,13 @@ def simulate_profile(mean_lambda = 4, sd = 3, min_lambda = 0.8, length = 400, a 
     '''
     
     mean_sqr = np.sqrt(mean_lambda)
-    sample_size = int(read_density * length)
+    sample_size = int((np.random.gamma(0.1,10,1)+ min_read_density) * length)
     lamb_c = np.random.gamma(mean_sqr, sd, length)+ min_lambda 
     lamb_m = copy.deepcopy(lamb_c)
         
     # Create a set of random pause sights in your mutant. 
     pause_sites = []
-    for i in range(round(length)):
+    for i in range(math.ceil(length*pause_area)):
         if random.random() < pause_density:
             pause_sites.append(i)
     if rng_pause == True:
