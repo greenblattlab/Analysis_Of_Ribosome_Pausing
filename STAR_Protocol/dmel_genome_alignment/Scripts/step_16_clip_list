@@ -1,0 +1,11 @@
+fastx_clipper -Q33 -a CTGTAGGCACCATCAAT -l 25 -c -n -v -i SRR7132290.fastq -o control_RPF_1.trimmed.fastq
+fastx_clipper -Q33 -a TGGAATTCTCGGGTGCCAAGG -l 25 -c -n -v -i SRR7132291.fastq -o control_RPF_2.trimmed.fastq
+fastx_clipper -Q33 -a TGGAATTCTCGGGTGCCAAGG -l 25 -c -n -v -i SRR7132288.fastq -o control_RPF_3.trimmed.fastq
+fastx_clipper -Q33 -a TGGAATTCTCGGGTGCCAAGG -l 25 -c -n -v -i SRR7132289.fastq -o control_RPF_4.trimmed.fastq
+fastx_clipper -Q33 -a TGGAATTCTCGGGTGCCAAGG -l 25 -c -n -v -i SRR7132294.fastq -o Fmr1_RPF_1.trimmed.fastq
+fastx_clipper -Q33 -a TGGAATTCTCGGGTGCCAAGG -l 25 -c -n -v -i SRR7132295.fastq -o Fmr1_RPF_2.trimmed.fastq
+fastx_clipper -Q33 -a TGGAATTCTCGGGTGCCAAGG -l 25 -c -n -v -i SRR7132292.fastq -o Fmr1_RPF_3.trimmed.fastq
+fastx_clipper -Q33 -a CTGTAGGCACCATCAAT -l 25 -c -n -v -i SRR7132293.fastq -o Fmr1_RPF_4.trimmed.fastq
+fastx_clipper -Q33 -a TGGAATTCTCGGGTGCCAAGG -l 25 -c -n -v -i SRR7132286.fastq -o Fmr1_RPF_5.trimmed.fastq
+fastx_clipper -Q33 -a TGGAATTCTCGGGTGCCAAGG -l 25 -c -n -v -i SRR7132287.fastq -o Fmr1_RPF_6.trimmed.fastq
+fastx_clipper -Q33 -a TGGAATTCTCGGGTGCCAAGG -l 25 -c -n -v -i SRR7132277.fastq -o Fmr1_RPF_7.trimmed.fastq
