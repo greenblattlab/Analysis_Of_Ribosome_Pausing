@@ -1,2 +1,2 @@
-STAR --genomeDir $HOME/Desktop/Work_Fall_2021/Protocol_test/genome --runThreadN 8 --readFilesIn SRR7132275.fastq  --outFileNamePrefix control_RNA_2_  --outSAMtype BAM SortedByCoordinate  --outSAMunmapped Within  --outSAMattributes Standard & \
-STAR --genomeDir $HOME/Desktop/Work_Fall_2021/Protocol_test/genome --runThreadN 8 --readFilesIn SRR7132282.fastq  --outFileNamePrefix Fmr1_RNA_2_  --outSAMtype BAM SortedByCoordinate  --outSAMunmapped Within  --outSAMattributes Standard
+STAR --genomeDir $HOME/Desktop/Work_Fall_2021/Protocol_test/genome --runThreadN 8 --readFilesIn SRR7132275.fastq  --outFileNamePrefix control_RNA_2_  --outSAMtype BAM SortedByCoordinate --outSAMattributes Standard & \
+STAR --genomeDir $HOME/Desktop/Work_Fall_2021/Protocol_test/genome --runThreadN 8 --readFilesIn SRR7132282.fastq  --outFileNamePrefix Fmr1_RNA_2_  --outSAMtype BAM SortedByCoordinate --outSAMattributes Standard
