@@ -268,25 +268,34 @@ def split_equal(value, parts):
     value = float(value)
     return [i*value/parts for i in range(1,parts+1)]
 
-def determine_enrichment(target, all_g, max_stat, N_secs, stat = "ks_stat"): 
+def determine_enrichment(target, non_target, max_stat, N_secs, stat = "ks_stat"): 
     '''
     A function that determine the proportion of target genes from target that are found in
-    all_g ks for a specified number of KS fractions. 
+    non_target ks for a specified number of KS fractions. 
     '''
-    ratios = []
+    frac_t = []
+    frac_n = []
+    enrich = []
     sections = split_equal(max_stat, N_secs)
-    ratios.append(len(target[stat][target[stat] < sections[0]])/len(all_g[stat][all_g[stat] < sections[0]]))
+    frac_t.append(len(target[stat][target[stat] < sections[0]])/len(target[stat]))
+    frac_n.append(len(non_target[stat][non_target[stat] < sections[0]])/len(non_target[stat]))
+    enrich.append(frac_t[0]/frac_n[0])
     for sec, i in zip(sections, list(range(len(sections)))):
         try:
-            ratios.append(len(target[stat][(target[stat] > sec) & (target[stat] < sections[i+1])]
-                )/len(all_g[stat][(all_g[stat] > sec) & (all_g[stat] < sections[i+1])]))
+            frac_t.append(len(target[stat][(target[stat] > sec) & (target[stat] < sections[i+1])]
+                )/len(target[stat]))
+            frac_n.append(len(non_target[stat][(non_target[stat] > sec) & (non_target[stat] < sections[i+1])]
+                )/len(non_target[stat]))
+            enrich.append(frac_t[i+1]/frac_n[i+1])
         except:
             pass
-    ratios.append(len(target[stat][target[stat] > sections[-1]])/len(all_g[stat][all_g[stat] > sections[-1]]))
+    frac_t.append(len(target[stat][target[stat] > sections[-1]])/len(target[stat]))
+    frac_n.append(len(non_target[stat][non_target[stat] > sections[-1]])/len(non_target[stat]))
+    enrich.append(frac_t[-1]/frac_n[-1])
     sections.insert(0,0)
-    return ratios, sections
+    return enrich, sections
 
-def Fisher_exact_p_values(target, all_g, sections, stat = "ks_stat"):
+def Fisher_exact_p_values(target, non_target, sections, stat = "ks_stat"):
     '''
     A function that uses Fisher's exact test to determine if the enrichment of the target gene is
     significant in any KS fractions. 
@@ -295,15 +304,15 @@ def Fisher_exact_p_values(target, all_g, sections, stat = "ks_stat"):
     for sec, i in zip(sections, list(range(len(sections)))):
         try:
             obs = len(target[stat][(target[stat] > sec) & (target[stat] < sections[i + 1])])
-            all_g_p = len(all_g[stat][(all_g[stat] > sec) & (all_g[stat] < sections[i + 1])])
-            table = [[obs,len(target)-obs],[all_g_p,len(all_g)-all_g_p]]
+            non_target_p = len(non_target[stat][(non_target[stat] > sec) & (non_target[stat] < sections[i + 1])])
+            table = [[obs,len(target)-obs],[non_target_p,len(non_target)-non_target_p]]
             p_v = stats.fisher_exact(table)[1]
             p_values.append(p_v)
         except:
             pass
     obs = len(target[stat][target[stat] > sections[-1]])
-    all_g_p = len(all_g[stat][all_g[stat] > sections[-1]])
-    table = [[obs,len(target)-obs],[all_g_p,len(all_g)-all_g_p]]
+    non_target_p = len(non_target[stat][non_target[stat] > sections[-1]])
+    table = [[obs,len(target)-obs],[non_target_p,len(non_target)-non_target_p]]
     p_v = stats.fisher_exact(table)[1]
     p_values.append(p_v)
     return p_values
