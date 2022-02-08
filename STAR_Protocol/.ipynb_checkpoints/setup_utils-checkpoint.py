@@ -90,7 +90,7 @@ def find_max_list(list):
     list_len = [len(i) for i in list]
     return(max(list_len))
 
-def save_count_positions(transcripts, codon_counts, save_path, save_name):
+def save_count_positions(transcripts, codon_counts, path_to_save):
     """
     This function saves a list of count arrays as a csv file while adding on the gene ID and transcript ID to the file and adding
     a header that shows the position along the transcript for each count.
@@ -119,6 +119,6 @@ def save_count_positions(transcripts, codon_counts, save_path, save_name):
     codon_counts.insert(0,header)
     
     # Save the newly altered list as a csv. 
-    with open(save_path + save_name, 'w', newline='') as f:
+    with open(path_to_save, 'w', newline='') as f:
         writer = csv.writer(f)
         writer.writerows(codon_counts)

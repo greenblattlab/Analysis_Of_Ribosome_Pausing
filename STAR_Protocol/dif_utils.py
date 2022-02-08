@@ -152,11 +152,11 @@ class Loess(object):
             y = a + b * n_x
         return self.denormalize_y(y)
 
-def load_count_positions(csv_name, counts_path):
+def load_count_positions(path_to_csv):
     # Create a list to hold the data and then fill it
     data = []
     gene_names = []
-    with open(counts_path + csv_name, newline = '') as csvfile:
+    with open(path_to_csv, newline = '') as csvfile:
         reader = csv.reader(csvfile)
         for row in reader:
             data.append(row)
