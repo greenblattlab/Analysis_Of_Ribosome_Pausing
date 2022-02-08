@@ -1,6 +1,3 @@
-""" !!!!!!!!!!!!!!!!!!!!! Functions used regularly during my analysis to load and process data. 
-"""
-
 from plastid import BAMGenomeArray, Transcript
 import numpy as np
 import csv
