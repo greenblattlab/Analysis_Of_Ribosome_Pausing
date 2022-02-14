@@ -1,2 +1,4 @@
 bowtie2 -L 23 --un=control_RPF_2.norrna.fastq -x $HOME/Desktop/Work_Fall_2021/Protocol_test/ncRNA/fly_ncrna control_RPF_2.trimmed.fastq > outputtemp.sam & \
 bowtie2 -L 23 --un=Fmr1_RPF_2.norrna.fastq -x /home/keeganfl/Desktop/Work_Fall_2021/Protocol_test/ncRNA/fly_ncrna Fmr1_RPF_2.trimmed.fastq > outputtemp.sam
+bowtie2 -L 23 --un=control_RPF_3.norrna.fastq -x /home/keeganfl/Desktop/Work_Fall_2021/Protocol_test/ncRNA/fly_ncrna control_RPF_3.trimmed.fastq > outputtemp.sam &
+bowtie2 -L 23 --un=Fmr1_RPF_3.norrna.fastq -x /home/keeganfl/Desktop/Work_Fall_2021/Protocol_test/ncRNA/fly_ncrna Fmr1_RPF_3.trimmed.fastq > outputtemp.sam
