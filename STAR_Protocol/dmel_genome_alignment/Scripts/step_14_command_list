@@ -1,8 +1,0 @@
-fastq-dump --gzip SRR7132275
-fastq-dump --gzip SRR7132282
-fastq-dump --gzip SRR7132291
-fastq-dump --gzip SRR7132295
-fastq-dump --gzip SRR7132288
-fastq-dump --gzip SRR7132292
-fastq-dump --gzip SRR7132276 # control RNA 3
-fastq-dump --gzip SRR7132279 # mutant RNA 3

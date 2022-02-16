@@ -1,8 +1,0 @@
-featureCounts -T 8 -t exon -g gene_id -a $HOME/Desktop/Work_Fall_2021/Protocol_test/genome/Drosophila_melanogaster.BDGP6.32.103.gtf -o counts_control_RNA_2.txt control_RNA_2_Aligned.sortedByCoord.out.bam & /
-featureCounts -T 8 -t exon -g gene_id -a $HOME/Desktop/Work_Fall_2021/Protocol_test/genome/Drosophila_melanogaster.BDGP6.32.103.gtf -o counts_Fmr1_RNA_2.txt Fmr1_RNA_2_Aligned.sortedByCoord.out.bam & /
-featureCounts -T 8 -t CDS -g gene_id -a $HOME/Desktop/Work_Fall_2021/Protocol_test/genome/Drosophila_melanogaster.BDGP6.32.103.gtf -o counts_control_RPF_2.txt control_RPF_2_Aligned.sortedByCoord.out.bam & /
-featureCounts -T 8 -t CDS -g gene_id -a $HOME/Desktop/Work_Fall_2021/Protocol_test/genome/Drosophila_melanogaster.BDGP6.32.103.gtf -o counts_Fmr1_RPF_2.txt Fmr1_RPF_2_Aligned.sortedByCoord.out.bam
-featureCounts -T 8 -t exon -g gene_id -a $HOME/Desktop/Work_Fall_2021/Protocol_test/genome/Drosophila_melanogaster.BDGP6.32.103.gtf -o counts_control_RNA_3.txt control_RNA_3_Aligned.sortedByCoord.out.bam &
-featureCounts -T 8 -t exon -g gene_id -a $HOME/Desktop/Work_Fall_2021/Protocol_test/genome/Drosophila_melanogaster.BDGP6.32.103.gtf -o counts_Fmr1_RNA_3.txt Fmr1_RNA_3_Aligned.sortedByCoord.out.bam &
-featureCounts -T 8 -t CDS -g gene_id -a $HOME/Desktop/Work_Fall_2021/Protocol_test/genome/Drosophila_melanogaster.BDGP6.32.103.gtf -o counts_control_RPF_3.txt control_RPF_3_Aligned.sortedByCoord.out.bam &
-featureCounts -T 8 -t CDS -g gene_id -a $HOME/Desktop/Work_Fall_2021/Protocol_test/genome/Drosophila_melanogaster.BDGP6.32.103.gtf -o counts_Fmr1_RPF_3.txt Fmr1_RPF_3_Aligned.sortedByCoord.out.bam
