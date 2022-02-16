@@ -1,0 +1,4 @@
+fastx_clipper -Q33 -a TGGAATTCTCGG -l 25 -c -n -v -i  SRR3746517.fastq -o control_RPF_1.trimmed.fastq &
+fastx_clipper -Q33 -a TGGAATTCTCGG -l 25 -c -n -v -i  SRR3746518.fastq -o control_RPF_2.trimmed.fastq &
+fastx_clipper -Q33 -a TGGAATTCTCGG -l 25 -c -n -v -i  SRR3746519.fastq -o Trspfl_RPF_1.trimmed.fastq &
+fastx_clipper -Q33 -a TGGAATTCTCGG -l 25 -c -n -v -i  SRR3746520.fastq -o Trspfl_RPF_2.trimmed.fastq

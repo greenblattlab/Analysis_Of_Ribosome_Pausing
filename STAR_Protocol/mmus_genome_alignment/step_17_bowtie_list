@@ -1,0 +1,4 @@
+bowtie2 -L 23 --un=control_RPF_1.norrna.fastq -x /home/keeganfl/Desktop/Work_Fall_2021/Protocol_test/ncRNA/mouse_ncrna control_RPF_1.trimmed.fastq > outputtemp.sam &
+bowtie2 -L 23 --un=control_RPF_2.norrna.fastq -x /home/keeganfl/Desktop/Work_Fall_2021/Protocol_test/ncRNA/mouse_ncrna control_RPF_2.trimmed.fastq > outputtemp.sam &
+bowtie2 -L 23 --un=Trspfl_RPF_1.norrna.fastq -x /home/keeganfl/Desktop/Work_Fall_2021/Protocol_test/ncRNA/mouse_ncrna Trspfl_RPF_1.trimmed.fastq > outputtemp.sam &
+bowtie2 -L 23 --un=Trspfl_RPF_2.norrna.fastq -x /home/keeganfl/Desktop/Work_Fall_2021/Protocol_test/ncRNA/mouse_ncrna Trspfl_RPF_2.trimmed.fastq > outputtemp.sam

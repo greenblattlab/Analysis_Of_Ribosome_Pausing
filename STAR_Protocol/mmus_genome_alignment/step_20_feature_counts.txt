@@ -1,0 +1,8 @@
+featureCounts -T 8 -t exon -g gene_id -a /home/keeganfl/Desktop/Work_Fall_2021/Protocol_test/genomes/mouse/mm10.refGene.gtf  -o counts_control_RNA_1.txt control_RNA_1_Aligned.sortedByCoord.out.bam
+featureCounts -T 8 -t exon -g gene_id -a /home/keeganfl/Desktop/Work_Fall_2021/Protocol_test/genomes/mouse/mm10.refGene.gtf  -o counts_control_RNA_2.txt control_RNA_2_Aligned.sortedByCoord.out.bam
+featureCounts -T 8 -t exon -g gene_id -a /home/keeganfl/Desktop/Work_Fall_2021/Protocol_test/genomes/mouse/mm10.refGene.gtf  -o counts_Trspfl_RNA_1.txt Trspfl_RNA_1_Aligned.sortedByCoord.out.bam
+featureCounts -T 8 -t exon -g gene_id -a /home/keeganfl/Desktop/Work_Fall_2021/Protocol_test/genomes/mouse/mm10.refGene.gtf  -o counts_Trspfl_RNA_2.txt Trspfl_RNA_2_Aligned.sortedByCoord.out.bam
+featureCounts -T 8 -t CDS -g gene_id -a /home/keeganfl/Desktop/Work_Fall_2021/Protocol_test/genomes/mouse/mm10.refGene.gtf  -o counts_control_RPF_1.txt control_RPF_1_Aligned.sortedByCoord.out.bam
+featureCounts -T 8 -t CDS -g gene_id -a /home/keeganfl/Desktop/Work_Fall_2021/Protocol_test/genomes/mouse/mm10.refGene.gtf  -o counts_control_RPF_2.txt control_RPF_2_Aligned.sortedByCoord.out.bam
+featureCounts -T 8 -t CDS -g gene_id -a /home/keeganfl/Desktop/Work_Fall_2021/Protocol_test/genomes/mouse/mm10.refGene.gtf  -o counts_Trspfl_RPF_1.txt Trspfl_RPF_1_Aligned.sortedByCoord.out.bam
+featureCounts -T 8 -t CDS -g gene_id -a /home/keeganfl/Desktop/Work_Fall_2021/Protocol_test/genomes/mouse/mm10.refGene.gtf  -o counts_Trspfl_RPF_2.txt Trspfl_RPF_2_Aligned.sortedByCoord.out.bam
