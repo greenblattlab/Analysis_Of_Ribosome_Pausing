@@ -1,0 +1,9 @@
+Samples,Data_Type,Conditions
+Trspfl_RNA_1,RNA-Seq,treated
+control_RPF_1,Ribo-Seq,control
+Trspfl_RPF_2,Ribo-Seq,treated
+control_RPF_2,Ribo-Seq,control
+Trspfl_RNA_2,RNA-Seq,treated
+Trspfl_RPF_1,Ribo-Seq,treated
+control_RNA_1,RNA-Seq,control
+control_RNA_2,RNA-Seq,control
