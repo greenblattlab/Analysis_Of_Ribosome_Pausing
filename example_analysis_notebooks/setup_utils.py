@@ -115,3 +115,4 @@ def save_count_positions(count_vectors, path_to_save):
     # Save the newly altered list as a csv. 
     with open(path_to_save, 'w', newline='') as f:
         writer = csv.writer(f)
+        writer.writerows(count_vectors)
