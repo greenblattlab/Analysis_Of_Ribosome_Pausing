@@ -5,27 +5,6 @@ import matplotlib.pyplot as plt
 import csv
 import math
 
-# Create a function that finds the proteins I need. 
-def find_transcript(gene,transcripts, count_vectors):
-    '''
-    A function that takes the name of a gene as input and finds 
-    the corresponding transcript from a transcript list. 
-    
-    returns both the transcript in question and the vector of counts for that transcript.
-    
-    This function is still a work in progress as for now it simply gives the last 
-    transcript in the list that matches the gene ID. 
-    '''
-    
-    for i in transcripts:
-        if i.attr['transcript_biotype'] == 'protein_coding':
-            if i.attr['gene_name'] == gene:
-                my_transcript = i
-                my_vector = count_vectors[transcripts.index(i)]
-                index = transcripts.index(i)
-                
-    return my_transcript, my_vector, index
-
 def find_max_list(list):
     ''' 
     A function that finds the longest list/array in a list of lists. 
