@@ -5,7 +5,7 @@ import csv
 def variable_threeprime_map_function(alignments,segment,p_offsets):
         '''
         This function is used to map read alignments to the location of the ribosomal p-site 
-        from their 3' end. The offsets to use for each read length are specified by file
+        from their 3' end. The offsets to use for each read length are specified by a file
         generated using RiboWaltz.
 
         alignments:
@@ -51,34 +51,13 @@ def variable_threeprime_map_function(alignments,segment,p_offsets):
 def VariableThreePrimeMapFactory(p_offsets):
     '''
     BamGenome array objects will only be able to pass the alignments and segment
-    arguments to the variable_threeprime_map_function. This wrapper all_gows me to
-    also specify the offset that needs to be passed to the function. 
+    arguments to the variable_threeprime_map_function. This wrapper allows one to
+    specify the offset that needs to be passed to the function. 
     '''
     def new_func(alignments,segment):
         return variable_threeprime_map_function(alignments,segment,p_offsets=p_offsets)
 
     return new_func
-
-# Create a function that finds the proteins I need. 
-def find_transcript(gene,transcripts, count_vectors):
-    '''
-    A function that takes the name of a gene as input and finds 
-    the corresponding transcript from a transcript list. 
-    
-    returns both the transcript in question and the vector of counts for that transcript.
-    
-    This function is still a work in progress as for now it simply gives the last 
-    transcript in the list that matches the gene ID. 
-    '''
-    
-    for i in transcripts:
-        if i.attr['transcript_biotype'] == 'protein_coding':
-            if i.attr['gene_name'] == gene:
-                my_transcript = i
-                my_vector = count_vectors[transcripts.index(i)]
-                index = transcripts.index(i)
-                
-    return my_transcript, my_vector, index
 
 def find_max_list(list):
     ''' 
@@ -88,6 +67,9 @@ def find_max_list(list):
     return(max(list_len))
 
 def add_gene_ids(transcripts, count_vectors):
+    '''
+    
+    '''
     #create lists to hold the gene IDs and transcript IDs of the transcripts 
     gene_id = []
     transcript_id = []
@@ -102,6 +84,9 @@ def add_gene_ids(transcripts, count_vectors):
         i.insert(0,transcript_id[j])
 
 def save_count_positions(count_vectors, path_to_save):
+    '''
+    
+    '''
     # Calculate the longest cds region in our new list of counts
     l_tr = find_max_list(count_vectors)
 

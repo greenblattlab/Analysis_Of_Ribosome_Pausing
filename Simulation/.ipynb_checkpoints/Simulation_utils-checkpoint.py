@@ -1,3 +1,6 @@
+""" Functions used regularly during my analysis to integrate the equations of the inhomogenous l-TASEP model into my work. 
+"""
+
 from plastid import BAMGenomeArray, VariableFivePrimeMapFactory, \
                         GTF2_TranscriptAssembler, GFF3_TranscriptAssembler, \
                         Transcript, ThreePrimeMapFactory
@@ -52,6 +55,49 @@ def maximum_current(lamb,a,B,I = 10):
         2*I*lamb[flip:]))**2 - Jmax/(I*lamb[flip:]))
     p = np.concatenate((pR,pl))
     return p, Jmax
+
+def make_mc(arr_c, position, a, B, I = 10):
+    '''
+    This function purposefully induces elongation limitation at a certain point 
+    '''
+    lamb_c = copy.deepcopy(arr_c)
+    Jmax = min(lamb_c)/((1+np.sqrt(I))**2)
+    crit_a = ((lamb_c[0] - (I-1) * Jmax) / 2)*(1 - np.sqrt(1 - (4*lamb_c[0]*Jmax)/((lamb_c[0] - (I - 1)*Jmax)**2)))
+    crit_B = ((lamb_c[-1] - (I-1) * Jmax) / 2)*(1 - np.sqrt(1 - (4*lamb_c[-1]*Jmax)/((lamb_c[-1] - (I - 1)*Jmax)**2)))
+    mut_min = position
+    while True:
+        lamb_c[mut_min] = lamb_c[mut_min]*0.9 # It keeps doing this every run through. 
+        Jmax = min(lamb_c)/((1+np.sqrt(I))**2)
+        crit_a = ((lamb_c[0] - (I-1) * Jmax) / 2)*(1 - np.sqrt(1 - (4*lamb_c[0]*Jmax)/((lamb_c[0] - (I - 1)*Jmax)**2)))
+        crit_B = ((lamb_c[-1] - (I-1) * Jmax) / 2)*(1 - np.sqrt(1 - (4*lamb_c[-1]*Jmax)/((lamb_c[-1] - (I - 1)*Jmax)**2)))
+        if crit_a < a and crit_B < B:
+            break
+    p, J = maximum_current(lamb_c,a=a,B=B,I = 10)
+    return p, J
+
+####!!!!#### This function is unsure of what to do in the presence of a high density regime. 
+def make_ld(lamb, a, B, I = 10):
+    '''
+    This function attempts to force everything to be in a low density regime regardless 
+    of the initiation rate and elongation rate inputs. It does this by increasing the minimum elongation rate. 
+    '''
+    lamb_c = copy.deepcopy(lamb)# Create a copy of lamb to work on. 
+    Jmax = min(lamb_c)/((1+np.sqrt(I))**2)
+    crit_a = ((lamb_c[0] - (I-1) * Jmax) / 2)*(1 - np.sqrt(1 - (4*lamb_c[0]*Jmax)/((lamb_c[0] - (I - 1)*Jmax)**2)))
+    crit_B = ((lamb_c[-1] - (I-1) * Jmax) / 2)*(1 - np.sqrt(1 - (4*lamb_c[-1]*Jmax)/((lamb_c[-1] - (I - 1)*Jmax)**2)))
+    if a < crit_a and B > crit_B:
+        p, J = low_density(lamb_c, a, I)
+    else:
+        while True:
+            min_l = np.where(lamb_c == np.amin(lamb_c))[0][0]
+            lamb_c[min_l] = lamb_c[min_l]*1.1 # It keeps doing this every run through. 
+            Jmax = min(lamb_c)/((1+np.sqrt(I))**2)
+            crit_a = ((lamb_c[0] - (I-1) * Jmax) / 2)*(1 - np.sqrt(1 - (4*lamb_c[0]*Jmax)/((lamb_c[0] - (I - 1)*Jmax)**2)))
+            crit_B = ((lamb_c[-1] - (I-1) * Jmax) / 2)*(1 - np.sqrt(1 - (4*lamb_c[-1]*Jmax)/((lamb_c[-1] - (I - 1)*Jmax)**2)))
+            if a < crit_a and B > crit_B:
+                break
+        p, J = low_density(lamb_c, a, I) 
+    return p, J
 
 def get_density(lamb, a, B, I = 10, intermediates = False):
     '''A function that determines the correct elongation  regime/phase and calculates the correct density 
@@ -339,10 +385,11 @@ def big_dif_sim(diff_dist, data_mutant, data_control, figsize = (16,50), fontsiz
             
     return ax
 
+# create a function that can determine the minimum elongation rate necessary to make alpha/crit_alpha equal to 1 (the minimum elongation rate necesary for a phase change)
 def get_crit_lambda(alpha, l1, I = 10):
     '''
-    This function calculates the minimum elongation rate that would be necessary to make the quotient of alpha divided by the critical
-    alpha equal to one. This means that this function outputs the minimum elongation rate that is necessary for a phase change to occur. 
+    This function calculates the minimum elongation rate that would be necessary to make the quotient of alpha divided by the critical alpha equal to one. 
+    This means that this function outputs the minimum elongation rate that is necessary for a phase change to occur. 
     '''
     lmin = symbols('lmin', positive = True, real = True)
     expr = ((l1 - (I-1) * (lmin/((1+sqrt(I))**2))) / 2)*(1 - sqrt(1 - (4*l1*(lmin/((1+sqrt(I))**2)))/((l1 - (I - 1)*(lmin/((1+sqrt(I))**2)))**2))) - alpha

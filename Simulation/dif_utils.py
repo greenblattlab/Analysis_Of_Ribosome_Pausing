@@ -147,11 +147,42 @@ def load_count_positions(path_to_csv):
     
     return data, gene_names
 
+def save_count_positions(transcripts, codon_counts, save_path, save_name):
+    """
+    This function saves a list of count arrays as a csv file while adding on the gene ID and transcript ID to the file and adding
+    a header that shows the position along the transcript for each count.
+    """
+    #create lists to hold the gene IDs and transcript IDs of the transcripts 
+    gene_id = []
+    transcript_id = []
+
+    for transcript in transcripts:
+        gene_id.append(transcript.attr["gene_name"])
+        transcript_id.append(transcript.attr["transcript_id"])
+        
+    # Insert the gene ids and transcript ids into the codon_count list. 
+    for i, j in zip(codon_counts, range(len(gene_id))):
+        i.insert(0,gene_id[j])
+        i.insert(0,transcript_id[j])
+        
+    # Calculate the longest cds region in our new list of counts
+    l_tr = find_max_list(codon_counts)
+
+    # Define a header that includes labels for the transcript and gene ID as 
+    # well as numbers that index the cds region position.
+    header=["transcript_id","gene_id"]+list(range(l_tr))
+
+    # insert that header into our counts list. 
+    codon_counts.insert(0,header)
+    
+    # Save the newly altered list as a csv. 
+    with open(save_path + save_name, 'w', newline='') as f:
+        writer = csv.writer(f)
+        writer.writerows(codon_counts)
+
+# define a function that calculates the smoothed vector of the normalized reads
+# using loess and calculates the cumulative sum of said vector.
 def get_smoothed_vector(vector, frac = 0.05):
-    '''
-    a function that calculates the smoothed vector of the normalized reads
-    using loess and calculates the cumulative sum of said vector.
-    '''
     vector = vector + 0.000000001
     positions = np.array(list(range(len(vector))))
     loess = Loess(positions, vector/sum(vector))
@@ -163,6 +194,35 @@ def get_smoothed_vector(vector, frac = 0.05):
     cumsum = np.cumsum(smoothed_vec)
     return smoothed_vec, cumsum
 
+def big_dif(diff_dist, gene_names, data_mutant, data_control, figsize = (16,50), fontsize = 12, stat_name = "ks_stat ="):
+    '''
+    A function which creates a large graph showing the profile arrays for a list of transcripts
+    
+    returns a matplotlib axis object. 
+    '''
+    fig,ax = plt.subplots(len(diff_dist), 2, figsize = figsize)
+    for axi, stat, gi in zip(ax, diff_dist, diff_dist.index):
+        for tr_m, tr_c, name in zip(data_mutant, data_control, gene_names):
+            if gi == name:
+                my_vec_mutant = tr_m
+                my_vec_control = tr_c
+        maxi = max([max(my_vec_mutant), max(my_vec_control)])*1.1
+
+        axi[0].plot(my_vec_mutant)
+        axi[0].text(len(my_vec_mutant)/2, maxi/1.2, stat_name + str(stat), fontsize = fontsize)
+        axi[0].set_ylim([0,maxi])
+        axi[0].set_ylabel("Read Counts", fontsize = fontsize)
+        axi[0].set_xlabel("Codon Position", fontsize = fontsize)
+        axi[0].set_title("mutant " + gi, fontsize = fontsize)
+        axi[1].plot(my_vec_control)
+        axi[1].set_ylim([0,maxi])
+        axi[1].set_ylabel("Read Counts", fontsize = fontsize)
+        axi[1].set_xlabel("Codon Position", fontsize = fontsize)
+        axi[1].set_title("control " + gi, fontsize = fontsize)
+    fig.tight_layout()
+            
+    return ax
+
 def split_equal(value, parts):
     '''
     A simple function that takes a number (value) and then divides that number into a certain number (parts) of equal parts
@@ -172,7 +232,7 @@ def split_equal(value, parts):
 
 def determine_enrichment(target, non_target, max_stat, N_secs, stat = "ks_stat"): 
     '''
-    A function that determine the proportion of target genes from a target table that are found in
+    A function that determine the proportion of target genes from target that are found in
     non_target ks for a specified number of KS fractions. 
     '''
     frac_t = []
