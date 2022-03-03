@@ -1,3 +1,4 @@
+from plastid import BAMGenomeArray, Transcript
 import numpy as np
 import pandas as pd
 from scipy import stats
@@ -5,12 +6,138 @@ import matplotlib.pyplot as plt
 import csv
 import math
 
+def variable_threeprime_map_function(alignments,segment,p_offsets):
+        '''
+        This function is used to map read alignments to the location of the ribosomal p-site 
+        from their 3' end. The offsets to use for each read length are specified by a file
+        generated using RiboWaltz.
+
+        alignments:
+            Information on the genome alignment of an individual read which is passed 
+            to the function from a BamGenome array created by plastid. 
+
+        segment:
+            Information on the individual read segment which is passed 
+            to the function from a BamGenome array created by plastid. 
+
+        p_offsets:
+            A pandas dataframe that has been loaded into the python environmemt.
+            This dataframe should follow this template. 
+                length          P_offsets
+                 28              12
+                 29              12
+                 30              13
+                ...             ...
+
+        '''
+        reads_out = []
+        count_array = np.zeros(len(segment))
+        for read in alignments: 
+            for length, offset in zip(p_offsets["length"],p_offsets["p_offset"]): 
+                if length != len(read.positions):
+                    continue # skip read if it is not the length we are currently offsetting.
+
+             # count offset 3' to 5' if the `segment` is on the plus-strand
+             # or is unstranded
+                if segment.strand == "+":
+                    p_site = read.positions[-offset - 1]
+                elif segment.strand == ".":
+                    p_site = read.positions[-offset - 1]
+             # count offset from other end if `segment` is on the minus-strand
+                elif segment.strand == "-":
+                    p_site = read.positions[offset]
+
+                if p_site >= segment.start and p_site < segment.end:
+                    reads_out.append(read)
+                    count_array[p_site - segment.start] += 1
+        return reads_out, count_array
+    
+def VariableThreePrimeMapFactory(p_offsets):
+    '''
+    BamGenome array objects will only be able to pass the alignments and segment
+    arguments to the variable_threeprime_map_function. This wrapper allows one to
+    specify the offset that needs to be passed to the function. 
+    '''
+    def new_func(alignments,segment):
+        return variable_threeprime_map_function(alignments,segment,p_offsets=p_offsets)
+
+    return new_func
+
 def find_max_list(list):
     ''' 
     A function that finds the longest list/array in a list of lists. 
     '''
     list_len = [len(i) for i in list]
     return(max(list_len))
+
+def add_gene_ids(transcripts, count_vectors):
+    '''
+    
+    '''
+    #create lists to hold the gene IDs and transcript IDs of the transcripts 
+    gene_id = []
+    transcript_id = []
+
+    for transcript in transcripts:
+        gene_id.append(transcript.attr["gene_name"])
+        transcript_id.append(transcript.attr["transcript_id"])
+        
+    # Insert the gene ids and transcript ids into the codon_count list. 
+    for i, j in zip(count_vectors, range(len(gene_id))):
+        i.insert(0,gene_id[j])
+        i.insert(0,transcript_id[j])
+
+def save_count_positions(count_vectors, path_to_save):
+    '''
+    
+    '''
+    # Calculate the longest cds region in our new list of counts
+    l_tr = find_max_list(count_vectors)
+
+    # Define a header that includes labels for the transcript and gene ID as 
+    # well as numbers that index the cds region position.
+    header=["transcript_id","gene_id"]+list(range(l_tr))
+
+    # insert that header into our counts list. 
+    count_vectors.insert(0,header)
+    
+    # Save the newly altered list as a csv. 
+    with open(path_to_save, 'w', newline='') as f:
+        writer = csv.writer(f)
+        writer.writerows(count_vectors)
+        
+def load_count_positions(path_to_csv):
+    # Create a list to hold the data and then fill it
+    data = []
+    gene_names = []
+    with open(path_to_csv, newline = '') as csvfile:
+        reader = csv.reader(csvfile)
+        for row in reader:
+            data.append(row)
+        
+    # Remove the first row of the data (the header row)
+    blank=data.pop(0)
+            
+    # Try to convert everything to a float if possible
+    for i,ii in zip(data, range(len(data))):
+        for j,jj in zip(i, range(len(i))):
+            try:
+                x = int(float(j))
+                data[ii][jj] = x
+            except:
+                pass
+            
+    # Remove empty space
+    for i,ii in zip(data, range(len(data))):
+        x = list(filter(('').__ne__, i))
+        data[ii] = x
+        
+    # Convert lists to np.arrays
+    for i,ii in zip(data, range(len(data))):
+        gene_names.append(data[ii][1])
+        data[ii] = np.array(data[ii][2:])
+    
+    return data, gene_names
 
 def tricubic(x):
     y = np.zeros_like(x)
@@ -114,75 +241,11 @@ class Loess(object):
             y = a + b * n_x
         return self.denormalize_y(y)
 
-def load_count_positions(path_to_csv):
-    # Create a list to hold the data and then fill it
-    data = []
-    gene_names = []
-    with open(path_to_csv, newline = '') as csvfile:
-        reader = csv.reader(csvfile)
-        for row in reader:
-            data.append(row)
-        
-    # Remove the first row of the data (the header row)
-    blank=data.pop(0)
-            
-    # Try to convert everything to a float if possible
-    for i,ii in zip(data, range(len(data))):
-        for j,jj in zip(i, range(len(i))):
-            try:
-                x = int(float(j))
-                data[ii][jj] = x
-            except:
-                pass
-            
-    # Remove empty space
-    for i,ii in zip(data, range(len(data))):
-        x = list(filter(('').__ne__, i))
-        data[ii] = x
-        
-    # Convert lists to np.arrays
-    for i,ii in zip(data, range(len(data))):
-        gene_names.append(data[ii][1])
-        data[ii] = np.array(data[ii][2:])
-    
-    return data, gene_names
-
-def save_count_positions(transcripts, codon_counts, save_path, save_name):
-    """
-    This function saves a list of count arrays as a csv file while adding on the gene ID and transcript ID to the file and adding
-    a header that shows the position along the transcript for each count.
-    """
-    #create lists to hold the gene IDs and transcript IDs of the transcripts 
-    gene_id = []
-    transcript_id = []
-
-    for transcript in transcripts:
-        gene_id.append(transcript.attr["gene_name"])
-        transcript_id.append(transcript.attr["transcript_id"])
-        
-    # Insert the gene ids and transcript ids into the codon_count list. 
-    for i, j in zip(codon_counts, range(len(gene_id))):
-        i.insert(0,gene_id[j])
-        i.insert(0,transcript_id[j])
-        
-    # Calculate the longest cds region in our new list of counts
-    l_tr = find_max_list(codon_counts)
-
-    # Define a header that includes labels for the transcript and gene ID as 
-    # well as numbers that index the cds region position.
-    header=["transcript_id","gene_id"]+list(range(l_tr))
-
-    # insert that header into our counts list. 
-    codon_counts.insert(0,header)
-    
-    # Save the newly altered list as a csv. 
-    with open(save_path + save_name, 'w', newline='') as f:
-        writer = csv.writer(f)
-        writer.writerows(codon_counts)
-
-# define a function that calculates the smoothed vector of the normalized reads
-# using loess and calculates the cumulative sum of said vector.
 def get_smoothed_vector(vector, frac = 0.05):
+    '''
+    a function that calculates the smoothed vector of the normalized reads
+    using loess and calculates the cumulative sum of said vector.
+    '''
     vector = vector + 0.000000001
     positions = np.array(list(range(len(vector))))
     loess = Loess(positions, vector/sum(vector))
@@ -194,35 +257,6 @@ def get_smoothed_vector(vector, frac = 0.05):
     cumsum = np.cumsum(smoothed_vec)
     return smoothed_vec, cumsum
 
-def big_dif(diff_dist, gene_names, data_mutant, data_control, figsize = (16,50), fontsize = 12, stat_name = "ks_stat ="):
-    '''
-    A function which creates a large graph showing the profile arrays for a list of transcripts
-    
-    returns a matplotlib axis object. 
-    '''
-    fig,ax = plt.subplots(len(diff_dist), 2, figsize = figsize)
-    for axi, stat, gi in zip(ax, diff_dist, diff_dist.index):
-        for tr_m, tr_c, name in zip(data_mutant, data_control, gene_names):
-            if gi == name:
-                my_vec_mutant = tr_m
-                my_vec_control = tr_c
-        maxi = max([max(my_vec_mutant), max(my_vec_control)])*1.1
-
-        axi[0].plot(my_vec_mutant)
-        axi[0].text(len(my_vec_mutant)/2, maxi/1.2, stat_name + str(stat), fontsize = fontsize)
-        axi[0].set_ylim([0,maxi])
-        axi[0].set_ylabel("Read Counts", fontsize = fontsize)
-        axi[0].set_xlabel("Codon Position", fontsize = fontsize)
-        axi[0].set_title("mutant " + gi, fontsize = fontsize)
-        axi[1].plot(my_vec_control)
-        axi[1].set_ylim([0,maxi])
-        axi[1].set_ylabel("Read Counts", fontsize = fontsize)
-        axi[1].set_xlabel("Codon Position", fontsize = fontsize)
-        axi[1].set_title("control " + gi, fontsize = fontsize)
-    fig.tight_layout()
-            
-    return ax
-
 def split_equal(value, parts):
     '''
     A simple function that takes a number (value) and then divides that number into a certain number (parts) of equal parts
@@ -232,7 +266,7 @@ def split_equal(value, parts):
 
 def determine_enrichment(target, non_target, max_stat, N_secs, stat = "ks_stat"): 
     '''
-    A function that determine the proportion of target genes from target that are found in
+    A function that determine the proportion of target genes from a target table that are found in
     non_target ks for a specified number of KS fractions. 
     '''
     frac_t = []
