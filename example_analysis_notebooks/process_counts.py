@@ -10,10 +10,10 @@ def readArguments():
     parser = argparse.ArgumentParser(description="")
     parser.add_argument("--path-to-counts", type = str, required = True,
                         help = "The path to a folder which contains the count arrays outputted by featureCounts")
-    parser.add_argument("--control-prefix", type = str, default = "control",
-                       help = "A prefix that is contained within the name of the count files for the control data")
-    parser.add_argument("--experimental-prefix", type = str, default = "experimental",
-                       help = "A prefix that is contained within the name of the count files for the experimental data")
+    parser.add_argument("--condition1-prefix", type = str, default = "condition1",
+                       help = "A prefix that is contained within the name of the count files for the condition1 data")
+    parser.add_argument("--condition2-prefix", type = str, default = "condition2",
+                       help = "A prefix that is contained within the name of the count files for the condition2 data")
     parser.set_defaults(feature =False)
     args = parser.parse_args()
     return args
@@ -57,9 +57,9 @@ def main(args):
     #Using a couple of string searches to record if each sample is a control or not.
     Conditions = []
     for i in Samples:
-        if args.experimental_prefix in i:
+        if args.condition1_prefix in i:
             Conditions.append("treated")
-        elif args.control_prefix in i:
+        elif args.condition2_prefix in i:
             Conditions.append("control")
 
     # Using a couple of string searches to record if each sample is made
