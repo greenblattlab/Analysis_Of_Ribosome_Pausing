@@ -71,9 +71,6 @@ def find_max_list(list):
     return(max(list_len))
 
 def add_gene_ids(transcripts, count_vectors):
-    '''
-    
-    '''
     #create lists to hold the gene IDs and transcript IDs of the transcripts 
     gene_id = []
     transcript_id = []
@@ -88,9 +85,6 @@ def add_gene_ids(transcripts, count_vectors):
         i.insert(0,transcript_id[j])
 
 def save_count_positions(count_vectors, path_to_save):
-    '''
-    
-    '''
     # Calculate the longest cds region in our new list of counts
     l_tr = find_max_list(count_vectors)
 
