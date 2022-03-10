@@ -19,8 +19,8 @@ samples = unique(offsets$sample)
 
 for (i in 1:length(samples)) {
   sam_offs = subset(offsets, sample == samples[i], 
-                    select = c('length', 'corrected_offset_from_3'))
-  colnames(sam_offs) = c('length', 'p_offset')
+                    select = c("length", "corrected_offset_from_3"))
+  colnames(sam_offs) = c("length", "p_offset")
   write.table(sam_offs, paste("/home/keeganfl/Desktop/Work_Fall_2021/Protocol_test/p-site_offsets/",
                               samples[i],"_p-site-offsets", sep=""),sep = "\t" , row.names = FALSE)
   
