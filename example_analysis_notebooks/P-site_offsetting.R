@@ -1,16 +1,17 @@
-# Load the ribowaltz package
+# Load the ribowaltz package.
 library(riboWaltz)
 
-# Load in the fly GTF annotation file
+# Load in the fly GTF annotation file.
 df = create_annotation(gtfpath = "/home/keeganfl/Desktop/Work_Fall_2021/Protocol_test/genome/mouse/mm10.refGene.gtf")
-# Ribowalts requires a file that has been aligned to the transcriptome rather than 
+
+# ribowaltz requires a file that has been aligned to the transcriptome rather than 
 # a file that has been aligned to the genome. 
 
-# Load up bam_list from transcriptome
+# Load up bam_list from transcriptome.
 bam_list = bamtolist("/home/keeganfl/Desktop/Work_Fall_2021/Protocol_test/tra_mouse",
                      annotation = df)
 
-# Calculate P_site offset
+# Calculate P_site offset.
 offsets = psite(data = bam_list, start = FALSE, extremity = "3end",
                 plot = TRUE, plot_dir = "/home/keeganfl/Desktop/Work_Fall_2021/data_tables/p-site_offsets/mouse")
 
